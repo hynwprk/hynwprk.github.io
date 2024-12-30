@@ -5,8 +5,9 @@ permalink: /flights/
 ---
 
 <!-- 
-If you're not using Jekyll site.static_files, replace latestFlighty
-with your actual CSV path (e.g. '/assets/FlightyExport-2024-12-30.csv')
+If you’re not using Jekyll’s site.static_files approach, 
+replace flightDataCSV below with a hardcoded path, e.g.:
+  const flightDataCSV = "/assets/data/FlightyExport-2024-12-30.csv";
 -->
 {% assign flightyFiles = site.static_files | where_exp: "f","f.path contains 'FlightyExport-'" %}
 {% assign sortedFlightyFiles = flightyFiles | sort: 'path' %}
@@ -155,7 +156,7 @@ body {
   </div>
 </div>
 
-<!-- ========== TOP ROUTES (Both Ways), Top 8 ========== -->
+<!-- ========== TOP ROUTES (BOTH WAYS, Top 8) ========== -->
 <div class="flight-section" id="top-routes">
   <h2>Top Routes (Both Ways)</h2>
   <div class="chart-container">
@@ -192,7 +193,7 @@ body {
 
 <!-- ========== SCRIPTS (CDN) ========== -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/cesium@latest/Build/Cesium/Widgets/widgets.css"
@@ -201,19 +202,19 @@ body {
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  /****************************************************
-    1) Load airport-locations
-  ****************************************************/
+  /*********************************************
+   1) Load airport-locations
+  *********************************************/
   const airportLocCSV = "{{ '/assets/data/airport-locations.csv' | relative_url }}";
 
-  /****************************************************
-    2) The highest-dated Flighty CSV (or set path)
-  ****************************************************/
+  /*********************************************
+   2) The highest-dated Flighty CSV (or set path)
+  *********************************************/
   const flightDataCSV = "{{ latestFlighty.path | relative_url }}";
 
   let airportDB = {};
 
-  // Parse airport-locations CSV
+  // Parse airport CSV
   Papa.parse(airportLocCSV, {
     download: true,
     header: true,
@@ -230,16 +231,16 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // Then parse the flight CSV
+  // Then parse flight CSV
   function parseFlightData() {
     Papa.parse(flightDataCSV, {
       download: true,
       header: true,
       complete: function(results) {
-        // Filter out rows with no Date
+        // Filter out rows missing Date
         let flights = results.data.filter(f => f.Date);
 
-        // Sort ascending by date, then reverse => newest first
+        // Sort ascending, then reverse => newest first
         flights.sort((a, b) => parseDateUTC(a.Date) - parseDateUTC(b.Date));
         flights.reverse();
 
@@ -248,21 +249,22 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  /****************************************************
-    Earth circumference for times-around-world
-  ****************************************************/
+  /*********************************************
+   Earth circumference for times-around-world
+  *********************************************/
   const EARTH_CIRCUM_MI = 24901;
   let viewer;
 
   function buildVisualization(flights) {
-    // Initialize Cesium
+    // Initialize Cesium viewer
     viewer = new Cesium.Viewer("cesiumContainer", {
       animation: false,
       timeline: false,
       baseLayerPicker: true,
       geocoder: false
     });
-    viewer.cesiumWidget.creditContainer.style.display = "none"; // Hide default credit
+    // Hide default Cesium credits
+    viewer.cesiumWidget.creditContainer.style.display = "none";
 
     let totalFlights = flights.length;
     let totalDistance = 0;
@@ -270,7 +272,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let uniqueAirlines = new Set();
 
     let airportVisits = {};
-    // Unify routes => "ATL ↔ ICN" same as "ICN ↔ ATL"
+    // Unify routes => "ATL ↔ ICN" is the same as "ICN ↔ ATL"
     let routeVisits = {};
     let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0]; // index 0 => Sunday
 
@@ -295,18 +297,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
       // Unified route => "ATL ↔ ICN"
       if (fromCode && toCode && fromCode !== toCode) {
-        let pair = [fromCode, toCode].sort();  // e.g. ["ATL","ICN"]
-        let routeLabel = pair.join(" ↔ ");     // "ATL ↔ ICN"
+        let sortedPair = [fromCode, toCode].sort();
+        let routeLabel = sortedPair.join(" ↔ ");
         routeVisits[routeLabel] = (routeVisits[routeLabel] || 0) + 1;
       }
 
-      // Weekday
+      // Flights by weekday
       let dt = parseDateUTC(f.Date);
       if (dt) {
         flightsByWeekday[dt.getUTCDay()]++;
       }
 
-      // Airlines
+      // Unique airlines
       if (f.Airline) {
         uniqueAirlines.add(f.Airline.trim());
       }
@@ -329,7 +331,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let mostVisited = visitsArray.length ? visitsArray[0][0] : "---";
     document.getElementById("most-visited-airport").textContent = mostVisited;
 
-    // Build table, globe, charts
+    // Build flight table, plot globe, build charts
     buildFlightTable(flights);
     plotOnGlobe(flights, uniqueAirports);
     buildTopAirportsChart(airportVisits);
@@ -341,6 +343,7 @@ document.addEventListener("DOMContentLoaded", function() {
   function parseDateUTC(dateStr) {
     if (!dateStr) return null;
     let str = dateStr.trim();
+    // If just YYYY-MM-DD, append T00:00:00Z
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
       str += "T00:00:00Z";
     } else if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
@@ -365,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function() {
     return 3958.8 * c;
   }
 
-  // === Plot on the Cesium globe
+  // === Plot on Cesium globe
   function plotOnGlobe(flights, airportSet) {
     airportSet.forEach(code => {
       let coords = airportDB[code];
@@ -391,6 +394,7 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     });
 
+    // Plot routes
     flights.forEach(f => {
       let fromCode = f.From ? f.From.trim().toUpperCase() : "";
       let toCode = f.To ? f.To.trim().toUpperCase() : "";
@@ -417,11 +421,13 @@ document.addEventListener("DOMContentLoaded", function() {
     flights.forEach(f => {
       let tr = document.createElement("tr");
       let dist = 0;
-      let fromCode = f.From ? f.From.trim().toUpperCase() : "";
-      let toCode = f.To ? f.To.trim().toUpperCase() : "";
+      let fromCode = (f.From || "").trim().toUpperCase();
+      let toCode = (f.To || "").trim().toUpperCase();
+
       if (airportDB[fromCode] && airportDB[toCode]) {
         dist = computeDistanceMiles(airportDB[fromCode], airportDB[toCode]);
       }
+
       let rowData = [
         f.Date,
         f.Airline,
@@ -431,6 +437,7 @@ document.addEventListener("DOMContentLoaded", function() {
         dist.toFixed(0),
         f["Aircraft Type Name"] || ""
       ];
+
       rowData.forEach(val => {
         let td = document.createElement("td");
         td.textContent = val;
@@ -440,18 +447,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  /*******************************************************
-   CHARTS with guaranteed 0-axis
-   We'll use Chart.js v3 syntax:
-   scales: {
-     y: {
-       min: 0,
-       ticks: { beginAtZero: true }
-     }
-   }
-   Plus a fallback if needed
-  *******************************************************/
-  // === TOP 8 AIRPORTS ===
+  /******************************************************
+   CHARTS (Chart.js v3+ with y: { min:0, ticks.beginAtZero:true }
+   ensures the axis starts at zero.
+  ******************************************************/
   function buildTopAirportsChart(airportVisits) {
     let visitsArray = Object.entries(airportVisits).sort((a, b) => b[1] - a[1]);
     let top8 = visitsArray.slice(0, 8);
@@ -462,11 +461,11 @@ document.addEventListener("DOMContentLoaded", function() {
     new Chart(document.getElementById("topAirportsChart"), {
       type: "bar",
       data: {
-        labels,
+        labels: labels,
         datasets: [
           {
             label: "Visits",
-            data,
+            data: data,
             backgroundColor: "rgba(54, 162, 235, 0.6)"
           }
         ]
@@ -475,9 +474,9 @@ document.addEventListener("DOMContentLoaded", function() {
         responsive: true,
         scales: {
           y: {
-            min: 0,                // Force minimum
+            min: 0,
             ticks: {
-              beginAtZero: true,   // Also ensure zero
+              beginAtZero: true,
               color: "#eee"
             }
           },
@@ -492,7 +491,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // === TOP 8 ROUTES (Unify => "ATL ↔ ICN") ===
   function buildTopRoutesChart(routeVisits) {
     let routesArray = Object.entries(routeVisits).sort((a, b) => b[1] - a[1]);
     let top8 = routesArray.slice(0, 8);
@@ -503,11 +501,11 @@ document.addEventListener("DOMContentLoaded", function() {
     new Chart(document.getElementById("topRoutesChart"), {
       type: "bar",
       data: {
-        labels,
+        labels: labels,
         datasets: [
           {
             label: "Count",
-            data,
+            data: data,
             backgroundColor: "rgba(153, 102, 255, 0.6)"
           }
         ]
@@ -533,7 +531,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // === WEEKDAY CHART (SUN–SAT) ===
   function buildWeekdayChart(flightsByWeekday) {
     let labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let data = flightsByWeekday;
@@ -541,11 +538,11 @@ document.addEventListener("DOMContentLoaded", function() {
     new Chart(document.getElementById("weekdayChart"), {
       type: "bar",
       data: {
-        labels,
+        labels: labels,
         datasets: [
           {
             label: "Flights",
-            data,
+            data: data,
             backgroundColor: "rgba(255, 159, 64, 0.6)"
           }
         ]
