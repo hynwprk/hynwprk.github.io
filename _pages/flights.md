@@ -4,7 +4,10 @@ title: "flights"
 permalink: /flights/
 ---
 
-<!-- Jekyll finds the file with the highest date in FlightyExport-YYYY-MM-DD.csv -->
+<!-- 
+If you don't use Jekyll's site.static_files approach, replace latestFlighty with your own CSV path:
+  const flightDataCSV = '/path/to/FlightyExport-YYYY-MM-DD.csv';
+-->
 {% assign flightyFiles = site.static_files | where_exp: "f","f.path contains 'FlightyExport-'" %}
 {% assign sortedFlightyFiles = flightyFiles | sort: 'path' %}
 {% assign latestFlighty = sortedFlightyFiles | last %}
@@ -198,15 +201,19 @@ body {
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // 1) Load airport-locations
+  /************************************************
+   1) Load airport-locations
+  ************************************************/
   const airportLocCSV = "{{ '/assets/data/airport-locations.csv' | relative_url }}";
 
-  // 2) The highest-dated Flighty CSV
+  /************************************************
+   2) The highest-dated Flighty CSV
+      (Or set your own path if not using Jekyll)
+  ************************************************/
   const flightDataCSV = "{{ latestFlighty.path | relative_url }}";
 
   let airportDB = {};
 
-  // === Parse airport CSV first
   Papa.parse(airportLocCSV, {
     download: true,
     header: true,
@@ -223,18 +230,15 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // === Then parse flight CSV
   function parseFlightData() {
     Papa.parse(flightDataCSV, {
       download: true,
       header: true,
       complete: function(results) {
-        // Filter out rows missing Date
         let flights = results.data.filter(f => f.Date);
 
-        // Sort ascending
+        // Sort ascending, then reverse => newest first
         flights.sort((a, b) => parseDateUTC(a.Date) - parseDateUTC(b.Date));
-        // Reverse => newest first
         flights.reverse();
 
         buildVisualization(flights);
@@ -261,10 +265,9 @@ document.addEventListener("DOMContentLoaded", function() {
     let uniqueAirports = new Set();
     let uniqueAirlines = new Set();
 
-    // For charts
     let airportVisits = {};
     let routeVisits = {};
-    let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0]; // Sun=0..Sat=6
+    let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0]; // index 0 => Sunday
 
     flights.forEach(f => {
       let fromCode = (f.From || "").trim();
@@ -276,7 +279,7 @@ document.addEventListener("DOMContentLoaded", function() {
         totalDistance += dist;
       }
 
-      // Track airports
+      // Airport counts
       if (fromCode) {
         uniqueAirports.add(fromCode);
         airportVisits[fromCode] = (airportVisits[fromCode] || 0) + 1;
@@ -286,22 +289,20 @@ document.addEventListener("DOMContentLoaded", function() {
         airportVisits[toCode] = (airportVisits[toCode] || 0) + 1;
       }
 
-      // Combine routes (both ways) by sorting the pair
+      // Routes
       if (fromCode && toCode && fromCode !== toCode) {
-        // e.g. [ATL, ICN] => [ATL, ICN] => "ATL-ICN"
         let pair = [fromCode.toUpperCase(), toCode.toUpperCase()].sort();
         let routeKey = pair.join("-");
         routeVisits[routeKey] = (routeVisits[routeKey] || 0) + 1;
       }
 
-      // Flights by weekday
+      // Weekday
       let dt = parseDateUTC(f.Date);
       if (dt) {
-        let weekday = dt.getUTCDay(); // 0..6
-        flightsByWeekday[weekday]++;
+        flightsByWeekday[dt.getUTCDay()]++;
       }
 
-      // Unique airlines
+      // Airlines
       if (f.Airline) {
         uniqueAirlines.add(f.Airline.trim());
       }
@@ -312,53 +313,47 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("unique-airports").textContent = uniqueAirports.size;
     document.getElementById("unique-airlines").textContent = uniqueAirlines.size;
 
-    // Distance
     let distK = Math.floor(totalDistance / 1000) + "k";
     document.getElementById("total-distance").textContent = distK;
 
-    // Times around the world
     let rawTimes = totalDistance / EARTH_CIRCUM_MI;
     let timesFloored = Math.floor(rawTimes * 10) / 10;
     let timesLabel = timesFloored.toFixed(1);
     document.getElementById("times-around-world").textContent = timesLabel;
 
     // Most visited airport
-    let visitsArray = Object.entries(airportVisits);
-    visitsArray.sort((a, b) => b[1] - a[1]);
+    let visitsArray = Object.entries(airportVisits).sort((a, b) => b[1] - a[1]);
     let mostVisited = visitsArray.length ? visitsArray[0][0].toUpperCase() : "---";
     document.getElementById("most-visited-airport").textContent = mostVisited;
 
-    // Build table (already newest→oldest)
+    // Build table
     buildFlightTable(flights);
 
-    // Plot on globe
+    // Globe
     plotOnGlobe(flights, uniqueAirports);
 
-    // Build charts
+    // Charts
     buildTopAirportsChart(airportVisits);
     buildTopRoutesChart(routeVisits);
     buildWeekdayChart(flightsByWeekday);
   }
 
-  // === Parsing date as UTC ===
+  /************************************************
+   Helpers
+  ************************************************/
   function parseDateUTC(dateStr) {
     if (!dateStr) return null;
     let str = dateStr.trim();
-
-    // If just YYYY-MM-DD, append "T00:00:00Z"
+    // If just YYYY-MM-DD, append T00:00:00Z
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
       str += "T00:00:00Z";
-    } 
-    // else if missing explicit timezone, add Z
-    else if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
+    } else if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
       str += "Z";
     }
-
     let d = new Date(str);
     return isNaN(d) ? null : d;
   }
 
-  // === Haversine distance in miles ===
   function computeDistanceMiles([lat1, lon1], [lat2, lon2]) {
     let toRad = a => (a * Math.PI) / 180;
     let dLat = toRad(lat2 - lat1);
@@ -373,9 +368,10 @@ document.addEventListener("DOMContentLoaded", function() {
     return 3958.8 * c;
   }
 
-  // === Plot everything on the Cesium globe ===
+  /************************************************
+   Cesium Globe
+  ************************************************/
   function plotOnGlobe(flights, airportSet) {
-    // Airport markers
     airportSet.forEach(code => {
       let coords = airportDB[code];
       if (!coords) return;
@@ -400,7 +396,6 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     });
 
-    // Flight routes
     flights.forEach(f => {
       let fromCode = f.From;
       let toCode = f.To;
@@ -419,7 +414,9 @@ document.addEventListener("DOMContentLoaded", function() {
     viewer.scene.camera.flyHome(2.0);
   }
 
-  // === Build the Flight Table (newest→oldest) ===
+  /************************************************
+   Flight Table (newest → oldest)
+  ************************************************/
   function buildFlightTable(flights) {
     let tbody = document.querySelector("#flightsTable tbody");
     tbody.innerHTML = "";
@@ -448,11 +445,12 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // === Top 8 Airports ===
+  /************************************************
+   Charts (with axes forced to start at 0)
+  ************************************************/
+  // --- Top 8 Airports
   function buildTopAirportsChart(airportVisits) {
-    let visitsArray = Object.entries(airportVisits);
-    // Sort descending by visits
-    visitsArray.sort((a, b) => b[1] - a[1]);
+    let visitsArray = Object.entries(airportVisits).sort((a, b) => b[1] - a[1]);
     let top8 = visitsArray.slice(0, 8);
 
     let labels = top8.map(item => item[0]);
@@ -465,7 +463,7 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "",
+            label: "Visits",
             data,
             backgroundColor: "rgba(54, 162, 235, 0.6)"
           }
@@ -479,6 +477,7 @@ document.addEventListener("DOMContentLoaded", function() {
             title: { display: false }
           },
           y: {
+            min: 0,
             beginAtZero: true,
             ticks: { color: "#eee" },
             title: { display: false }
@@ -491,15 +490,12 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // === Top 8 Routes (unified as "ATL-ICN" for both directions) ===
+  // --- Top 8 Routes
   function buildTopRoutesChart(routeVisits) {
-    let routesArray = Object.entries(routeVisits);
-    // Sort descending by count
-    routesArray.sort((a, b) => b[1] - a[1]);
+    let routesArray = Object.entries(routeVisits).sort((a, b) => b[1] - a[1]);
     let top8 = routesArray.slice(0, 8);
 
-    // e.g. key "ATL-ICN"
-    let labels = top8.map(r => r[0]);
+    let labels = top8.map(r => r[0]); // e.g. "ATL-ICN"
     let data = top8.map(r => r[1]);
 
     let ctx = document.getElementById("topRoutesChart").getContext("2d");
@@ -509,7 +505,7 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "",
+            label: "Count",
             data,
             backgroundColor: "rgba(153, 102, 255, 0.6)"
           }
@@ -523,6 +519,7 @@ document.addEventListener("DOMContentLoaded", function() {
             title: { display: false }
           },
           y: {
+            min: 0,
             beginAtZero: true,
             ticks: { color: "#eee" },
             title: { display: false }
@@ -535,7 +532,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // === Weekday Chart (Sun–Sat) ===
+  // --- Weekday Chart
   function buildWeekdayChart(flightsByWeekday) {
     let labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let data = flightsByWeekday;
@@ -547,7 +544,7 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "",
+            label: "Flights",
             data,
             backgroundColor: "rgba(255, 159, 64, 0.6)"
           }
@@ -561,6 +558,7 @@ document.addEventListener("DOMContentLoaded", function() {
             title: { display: false }
           },
           y: {
+            min: 0,
             beginAtZero: true,
             ticks: { color: "#eee" },
             title: { display: false }
