@@ -1,17 +1,17 @@
 ---
 layout: page
-title: "flights"
+title: "Flights"
 permalink: /flights/
 ---
 
 <!-- 
-  Dark-themed “Flighty-like” page with:
-   - Summaries: total flights, total distance, times around world, total flight time (re-added)
-     - Flight time is computed by forcibly parsing date/time as UTC
-   - 3D globe routes
-   - Table of flights sorted from newest to oldest
-   - Top 10 visited airports
-   - Day-of-year flights chart
+  Dark-themed “Flights” page:
+    - Summaries: total flights, total distance in “xxx K” style, times-around-world (+ suffix),
+      #unique airports, #unique airlines, and a card for MOST VISITED AIRPORT (uppercase).
+    - 3D globe labeled "Flights"
+    - Table sorted newest → oldest
+    - Day-of-year chart
+    - Top-10 visited airports chart
 -->
 
 <style>
@@ -114,13 +114,13 @@ body {
 }
 </style>
 
-<!-- ========== 3D GLOBE SECTION ========== -->
+<!-- ========== FLIGHTS (3D GLOBE) ========== -->
 <div class="flight-section" id="flight-globe">
-  <h2>Global Flight Routes</h2>
+  <h2>Flights</h2>
   <div id="cesiumContainer"></div>
 </div>
 
-<!-- ========== FLIGHT SUMMARY SECTION ========== -->
+<!-- ========== SUMMARY SECTION ========== -->
 <div class="flight-section" id="flight-summary">
   <h2>Flight Summary</h2>
   <div class="stats-grid">
@@ -136,10 +136,9 @@ body {
       <h3 id="times-around-world">0</h3>
       <p>Times Around the World</p>
     </div>
-    <!-- RE-ADDED FLIGHT TIME -->
     <div class="stat-card">
-      <h3 id="total-flight-time">0</h3>
-      <p>Total Flight Time</p>
+      <h3 id="most-visited-airport">---</h3>
+      <p>Most Visited Airport</p>
     </div>
     <div class="stat-card">
       <h3 id="unique-airports">0</h3>
@@ -157,7 +156,7 @@ body {
   <h2>Top 10 Visited Airports</h2>
   <p>Count how often each airport appears in From/To, then show the top 10.</p>
   <div class="chart-container">
-    <canvas id="topAirportsChart" width="600" height="300"></canvas>
+    <canvas id="topAirportsChart"></canvas>
   </div>
 </div>
 
@@ -166,11 +165,11 @@ body {
   <h2>When Do I Fly in a Year?</h2>
   <p>Flights by day-of-year (1-365/366)</p>
   <div class="chart-container">
-    <canvas id="dayOfYearChart" width="600" height="300"></canvas>
+    <canvas id="dayOfYearChart"></canvas>
   </div>
 </div>
 
-<!-- ========== FLIGHT TABLE ========== -->
+<!-- ========== FLIGHT TABLE (Newest → Oldest) ========== -->
 <div class="flight-section" id="flight-table">
   <h2>All Flights (New → Old)</h2>
   <table id="flightsTable">
@@ -199,14 +198,14 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/cesium@latest/Build/Cesium/Cesium.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // CSV paths
+document.addEventListener("DOMContentLoaded", function() {
+  // Paths
   const airportLocCSV = "{{ '/assets/data/airport-locations.csv' | relative_url }}";
   const flightDataCSV = "{{ '/assets/data/FlightyExport-2024-12-30.csv' | relative_url }}";
 
   let airportDB = {};
 
-  // ========== Step A: Parse airport-locations.csv ==========
+  // 1) Parse airport-locations.csv
   Papa.parse(airportLocCSV, {
     download: true,
     header: true,
@@ -228,16 +227,15 @@ document.addEventListener('DOMContentLoaded', function() {
       download: true,
       header: true,
       complete: function(results) {
-        // Filter out empty lines
         let flights = results.data.filter(f => f.Date);
-        // Sort flights: newest to oldest
+        // Sort descending (newest → oldest)
         flights.sort((a, b) => parseDateUTC(b.Date) - parseDateUTC(a.Date));
         buildVisualization(flights);
       }
     });
   }
 
-  // Earth radius & circumference in miles
+  // Earth
   const EARTH_RADIUS_MI = 3958.8;
   const EARTH_CIRCUM_MI = 24901;
 
@@ -253,16 +251,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
+    // Summaries
     let totalFlights = flights.length;
     let totalDistance = 0;
-    let totalFlightHours = 0;  // We'll store the sum in hours
     let uniqueAirports = new Set();
     let uniqueAirlines = new Set();
-
-    // For top 10 visited airports
-    let airportVisits = {};
-
-    // For day-of-year distribution
+    let airportVisits = {}; // for top 10 & most visited airport
     let flightsByDayOfYear = {};
     for (let i = 1; i <= 366; i++) {
       flightsByDayOfYear[i] = 0;
@@ -271,11 +265,9 @@ document.addEventListener('DOMContentLoaded', function() {
     flights.forEach(f => {
       let fromCode = f.From;
       let toCode = f.To;
-
-      // Airlines
       if (f.Airline) uniqueAirlines.add(f.Airline);
 
-      // Distance
+      // Distances
       if (airportDB[fromCode] && airportDB[toCode]) {
         let dist = computeDistanceMiles(airportDB[fromCode], airportDB[toCode]);
         totalDistance += dist;
@@ -291,52 +283,39 @@ document.addEventListener('DOMContentLoaded', function() {
         airportVisits[toCode] = (airportVisits[toCode] || 0) + 1;
       }
 
-      // Flight time using UTC
-      // Prefer "Take off (Actual)" + "Landing (Actual)"
-      let depStr = f["Take off (Actual)"] || f["Gate Departure (Actual)"];
-      let arrStr = f["Landing (Actual)"]   || f["Gate Arrival (Actual)"];
-      let dep = parseDateUTC(depStr);
-      let arr = parseDateUTC(arrStr);
-      if (dep && arr && arr > dep) {
-        let diffHrs = (arr - dep) / (1000 * 60 * 60);
-        totalFlightHours += diffHrs;
-      }
-
-      // Day-of-year
+      // Day-of-year chart
       let d = parseDateUTC(f.Date);
       if (d) {
         let dayOfYear = getDayOfYear(d);
-        if (flightsByDayOfYear[dayOfYear] != null) {
-          flightsByDayOfYear[dayOfYear] += 1;
+        if (dayOfYear >= 1 && dayOfYear <= 366) {
+          flightsByDayOfYear[dayOfYear]++;
         }
       }
     });
 
-    // Summaries
-    let milesRoundedDown = Math.floor(totalDistance / 1000) * 1000;
-    let timesAroundWorld = totalDistance / EARTH_CIRCUM_MI; 
-    let timesRounded = Math.floor(timesAroundWorld * 10) / 10; // e.g. 2.34 => 2.3
+    // Summaries: totalDistance => "XXK" style
+    // e.g. 143422 => 143 K
+    let distK = Math.floor(totalDistance / 1000); 
+    let distLabel = distK + "K";
+
+    // Times around world => round down to 1 decimal => + suffix
+    let rawTimes = (totalDistance / EARTH_CIRCUM_MI);
+    let timesFloored = Math.floor(rawTimes * 10) / 10; // e.g. 2.3
+    let timesLabel = timesFloored.toFixed(1) + "+";   // e.g. "2.3+"
 
     document.getElementById("total-flights").textContent = totalFlights;
-    document.getElementById("total-distance").textContent = milesRoundedDown + "+"; 
-    document.getElementById("times-around-world").textContent = timesRounded.toFixed(1) + "+";
-
-    // Convert totalFlightHours => d/h/m
-    let days = Math.floor(totalFlightHours / 24);
-    let hours = Math.floor(totalFlightHours % 24);
-    let leftover = (totalFlightHours - (days * 24) - hours).toFixed(2);
-    let leftoverMins = Math.round(parseFloat(leftover) * 60);
-    let timeStr = "";
-    if (days > 0) timeStr += `${days}d `;
-    if (hours > 0) timeStr += `${hours}h `;
-    if (leftoverMins > 0) timeStr += `${leftoverMins}m`;
-    if (!timeStr) timeStr = "0h";
-    document.getElementById("total-flight-time").textContent = timeStr;
-
+    document.getElementById("total-distance").textContent = distLabel;
+    document.getElementById("times-around-world").textContent = timesLabel;
     document.getElementById("unique-airports").textContent = uniqueAirports.size;
     document.getElementById("unique-airlines").textContent = uniqueAirlines.size;
 
-    // Build flight table (already sorted newest -> oldest)
+    // Most visited airport (uppercase)
+    let visitsArray = Object.entries(airportVisits); // [[code, count], ...]
+    visitsArray.sort((a, b) => b[1] - a[1]);
+    let mostVisited = visitsArray.length ? visitsArray[0][0].toUpperCase() : "---";
+    document.getElementById("most-visited-airport").textContent = mostVisited;
+
+    // Build table
     buildFlightTable(flights);
 
     // Plot on globe
@@ -347,23 +326,30 @@ document.addEventListener('DOMContentLoaded', function() {
     buildDayOfYearChart(flightsByDayOfYear);
   }
 
-  // Parse date/time as UTC to mitigate timezone issues
+  // Parse date/time as UTC
   function parseDateUTC(dateStr) {
     if (!dateStr) return null;
-    // If dateStr lacks 'Z' or any timezone, forcibly append 'Z'
-    // Example: 2024-03-30T20:04 => 2024-03-30T20:04Z
     let str = dateStr.trim();
+    // If no timezone indicated, forcibly append "Z" => treat as UTC
     if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
       str += "Z";
     }
     let d = new Date(str);
-    if (isNaN(d)) return null;
-    return d;
+    return isNaN(d) ? null : d;
   }
 
-  // Great-circle distance in miles
+  // Day-of-year
+  function getDayOfYear(dateObj) {
+    let start = new Date(Date.UTC(dateObj.getUTCFullYear(), 0, 1));
+    // difference in ms from Jan 1
+    let diff = dateObj.getTime() - start.getTime();
+    let day = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1; 
+    return day; // 1..365/366
+  }
+
+  // Distance (Haversine)
   function computeDistanceMiles([lat1, lon1], [lat2, lon2]) {
-    let toRad = angle => (angle * Math.PI) / 180;
+    let toRad = a => (a * Math.PI) / 180;
     let dLat = toRad(lat2 - lat1);
     let dLon = toRad(lon2 - lon1);
     let rLat1 = toRad(lat1);
@@ -376,38 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return 3958.8 * c; // miles
   }
 
-  // Build flights table (descending order is already sorted above)
-  function buildFlightTable(flights) {
-    let tbody = document.querySelector("#flightsTable tbody");
-    tbody.innerHTML = "";
-
-    flights.forEach(f => {
-      let tr = document.createElement("tr");
-      let dist = 0;
-      if (airportDB[f.From] && airportDB[f.To]) {
-        dist = computeDistanceMiles(airportDB[f.From], airportDB[f.To]);
-      }
-
-      let rowData = [
-        f.Date,
-        f.Airline,
-        f.Flight,
-        f.From,
-        f.To,
-        dist.toFixed(0),
-        f["Aircraft Type Name"] || ""
-      ];
-
-      rowData.forEach(val => {
-        let td = document.createElement("td");
-        td.textContent = val;
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Plot airports & routes in Cesium
+  // Plot flights on globe
   function plotOnGlobe(flights, airportSet) {
     airportSet.forEach(code => {
       let coords = airportDB[code];
@@ -451,16 +406,37 @@ document.addEventListener('DOMContentLoaded', function() {
     viewer.scene.camera.flyHome(2.0);
   }
 
-  // Day-of-year distribution
-  function getDayOfYear(dateObj) {
-    let start = new Date(dateObj.getFullYear(), 0, 0);
-    let diff = dateObj - start + 
-      (start.getTimezoneOffset() - dateObj.getTimezoneOffset()) * 60 * 1000;
-    let day = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return day;
+  // Build flight table
+  function buildFlightTable(flights) {
+    let tbody = document.querySelector("#flightsTable tbody");
+    tbody.innerHTML = "";
+
+    // flights is already sorted newest->oldest
+    flights.forEach(f => {
+      let tr = document.createElement("tr");
+      let dist = 0;
+      if (airportDB[f.From] && airportDB[f.To]) {
+        dist = computeDistanceMiles(airportDB[f.From], airportDB[f.To]);
+      }
+      let rowData = [
+        f.Date,
+        f.Airline,
+        f.Flight,
+        f.From,
+        f.To,
+        dist.toFixed(0),
+        f["Aircraft Type Name"] || ""
+      ];
+      rowData.forEach(val => {
+        let td = document.createElement("td");
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
   }
 
-  // Build top airports chart
+  // Build top-10 airports chart
   function buildTopAirportsChart(airportVisits) {
     let visitsArray = Object.entries(airportVisits);
     visitsArray.sort((a, b) => b[1] - a[1]);
@@ -485,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
       options: {
         responsive: true,
         scales: {
-          x: { 
+          x: {
             title: { display: true, text: "Airport", color: "#eee" },
             ticks: { color: "#eee" }
           },
@@ -496,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         },
         plugins: {
-          legend: { 
+          legend: {
             labels: { color: "#eee" }
           }
         }
@@ -510,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let data = [];
     for (let day = 1; day <= 366; day++) {
       labels.push(day);
-      data.push(flightsByDayOfYear[day] || 0);
+      data.push(flightsByDayOfYear[day]);
     }
 
     let ctx = document.getElementById("dayOfYearChart").getContext("2d");
