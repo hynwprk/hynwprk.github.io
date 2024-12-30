@@ -1,148 +1,183 @@
 ---
 layout: page
-title: "My Flight Visualizations"
+title: "Flight Visuals (3D Globe on Top)"
 permalink: /flight-visuals/
 ---
 
 <!-- 
-  Flighty-like visualization 
-  1) CSV flight data
-  2) Summary stats
-  3) Monthly chart
-  4) Full table (with all columns)
-  5) 3D globe (CesiumJS)
+  This page:
+  1) Renders a 3D globe (Cesium) at the top
+  2) Shows all used airports as dots
+  3) Draws flight route polylines
+  4) Displays summary stats, monthly chart, and optional flight table 
+  in a pleasing style reminiscent of “Flighty.”
 -->
 
 <style>
-  /* ========== FLIGHTY-LIKE, CLEAN STYLING ========== */
-  #flight-summary,
-  #flight-charts,
-  #flight-table,
-  #flight-globe {
-    margin: 2rem 0;
-    padding: 1.5rem;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    background-color: #fafafa;
-  }
+/* ================ STYLING FOR A MODERN, CLEAN LOOK ================ */
 
-  #flight-summary h2,
-  #flight-charts h2,
-  #flight-table h2,
-  #flight-globe h2 {
-    margin-top: 0;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 1.4rem;
-    color: #2c3e50;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 0.5rem;
-  }
+/* Basic container styling for each major section */
+.flight-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #333;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
-  #flight-summary p {
-    margin: 0.3rem 0;
-  }
+/* Section headings */
+.flight-section h2 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  color: #2c3e50;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
 
-  #flightsTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-  }
+/* 3D globe container at top */
+#cesiumContainer {
+  width: 100%;
+  height: 550px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
 
-  #flightsTable th,
-  #flightsTable td {
-    border-bottom: 1px solid #ddd;
-    padding: 0.5rem;
-    text-align: left;
-  }
+/* Summary stats as cards */
+.stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
 
-  #flightsByMonth {
-    max-width: 100%;
-  }
+.stat-card {
+  flex: 1 1 250px;
+  background-color: #f8f8f8;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
 
-  /* The container that will hold the Cesium globe */
-  #cesiumContainer {
-    width: 100%;
-    height: 600px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+.stat-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: #222;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 1rem;
+  color: #444;
+}
+
+/* Chart container */
+#flightChart {
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+/* Optional table for flight listing */
+#flightsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+#flightsTable th,
+#flightsTable td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+#flightsTable th {
+  background-color: #f2f2f2;
+}
 </style>
 
-<!-- ========== FLIGHT SUMMARY SECTION ========== -->
-<div id="flight-summary">
+<!-- ================== 3D GLOBE (CESIUM) SECTION AT THE TOP ================== -->
+<div class="flight-section" id="flight-globe">
+  <h2>Global Flight Routes</h2>
+  <div id="cesiumContainer"></div>
+</div>
+
+<!-- ================== FLIGHT SUMMARY SECTION ================== -->
+<div class="flight-section" id="flight-summary">
   <h2>Flight Summary</h2>
-  <p><strong>Total Flights:</strong> <span id="total-flights"></span></p>
-  <p><strong>Total Flight Hours:</strong> <span id="total-flight-hours"></span></p>
-  <p><strong>Average Departure Delay (mins):</strong> <span id="avg-dep-delay"></span></p>
-  <p><strong>Average Arrival Delay (mins):</strong> <span id="avg-arr-delay"></span></p>
-  <p><strong>Cancellations:</strong> <span id="total-cancellations"></span></p>
-  <p><strong>Diversions:</strong> <span id="total-diversions"></span></p>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3 id="total-flights">0</h3>
+      <p>Total Flights</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="total-distance">0</h3>
+      <p>Total Distance (mi)</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="around-world">0</h3>
+      <p>Times Around the World</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="total-flight-time">0</h3>
+      <p>Total Flight Time</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="unique-airports">0</h3>
+      <p>Airports Visited</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="unique-airlines">0</h3>
+      <p>Airlines Flown</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="delay-hours">0</h3>
+      <p>Hours Lost to Delays</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="most-flown-aircraft">—</h3>
+      <p>Most Flown Aircraft</p>
+    </div>
+  </div>
 </div>
 
-<!-- ========== MONTHLY FLIGHTS CHART ========== -->
-<div id="flight-charts">
-  <h2>Flights by Month</h2>
-  <canvas id="flightsByMonth" width="600" height="300"></canvas>
+<!-- ================== MONTHLY FLIGHT CHART ================== -->
+<div class="flight-section" id="flight-charts">
+  <h2>Monthly Flights Trend</h2>
+  <canvas id="flightChart" width="600" height="300"></canvas>
 </div>
 
-<!-- ========== FLIGHTS TABLE ========== -->
-<div id="flight-table">
-  <h2>All Flights</h2>
+<!-- ================== OPTIONAL FLIGHTS TABLE ================== -->
+<div class="flight-section" id="flight-table">
+  <h2>Flights (Optional Listing)</h2>
   <table id="flightsTable">
     <thead>
       <tr>
-        <!-- Let's list all columns from your CSV in the order you want them: -->
         <th>Date</th>
         <th>Airline</th>
-        <th>Flight</th>
+        <th>Flight #</th>
         <th>From</th>
         <th>To</th>
-        <th>Dep Terminal</th>
-        <th>Dep Gate</th>
-        <th>Arr Terminal</th>
-        <th>Arr Gate</th>
-        <th>Canceled</th>
-        <th>Diverted To</th>
-        <th>Gate Departure (Scheduled)</th>
-        <th>Gate Departure (Actual)</th>
-        <th>Take off (Scheduled)</th>
-        <th>Take off (Actual)</th>
-        <th>Landing (Scheduled)</th>
-        <th>Landing (Actual)</th>
-        <th>Gate Arrival (Scheduled)</th>
-        <th>Gate Arrival (Actual)</th>
-        <th>Aircraft Type Name</th>
-        <th>Tail Number</th>
-        <th>PNR</th>
-        <th>Seat</th>
-        <th>Seat Type</th>
-        <th>Cabin Class</th>
-        <th>Flight Reason</th>
-        <th>Notes</th>
-        <th>Flight Flighty ID</th>
-        <th>Airline Flighty ID</th>
-        <th>Departure Airport Flighty ID</th>
-        <th>Arrival Airport Flighty ID</th>
-        <th>Diverted To Airport Flighty ID</th>
-        <th>Aircraft Type Flighty ID</th>
+        <th>Distance (mi)</th>
+        <th>Aircraft</th>
+        <th>Dep Delay (min)</th>
+        <th>Arr Delay (min)</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
-<!-- ========== 3D GLOBE SECTION (CESIUM) ========== -->
-<div id="flight-globe">
-  <h2>3D Globe</h2>
-  <div id="cesiumContainer"></div>
-</div>
-
 <!-- ========== SCRIPTS (CDN) ========== -->
-<!-- Papa Parse to read CSV -->
+<!-- Papa Parse for CSV parsing -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<!-- Chart.js for monthly chart -->
+<!-- Chart.js for the monthly flight trend chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- CesiumJS for 3D globe -->
+<!-- CesiumJS for the 3D globe -->
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/cesium@latest/Build/Cesium/Widgets/widgets.css"
@@ -150,262 +185,291 @@ permalink: /flight-visuals/
 <script src="https://cdn.jsdelivr.net/npm/cesium@latest/Build/Cesium/Cesium.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // 1) Path to your CSV file
-    const csvPath = "{{ '/assets/data/FlightyExport-2024-12-30.csv' | relative_url }}";
+document.addEventListener('DOMContentLoaded', function() {
+  // 1) Path to CSV
+  const csvPath = "{{ '/assets/data/FlightyExport-2024-12-30.csv' | relative_url }}";
 
-    Papa.parse(csvPath, {
-      download: true,
-      header: true,
-      complete: function (results) {
-        const flights = results.data.filter((row) => row.Date); 
-        buildSummary(flights);
-        buildChart(flights);
-        buildTable(flights);
-        buildGlobe(flights);
-      },
-    });
-
-    // 2) AIRPORT COORDS (Add or expand to include all airport codes)
-    const airportCoords = {
-      ICN: [37.4602, 126.4407],
-      ATL: [33.6367, -84.4281],
-      MIA: [25.7954, -80.2901],
-      ORD: [41.9742, -87.9073],
-      LGA: [40.7769, -73.8740],
-      DCA: [38.8512, -77.0402],
-      JFK: [40.6413, -73.7781],
-      SFO: [37.6213, -122.3790],
-      LAX: [33.9416, -118.4085],
-      BOS: [42.3656, -71.0096],
-      PIT: [40.4914, -80.2329],
-      MSP: [44.8848, -93.2223],
-      HNL: [21.3245, -157.9251],
-      EWR: [40.6895, -74.1745],
-      CLT: [35.2144, -80.9473],
-      PHX: [33.4342, -112.0116],
-      // ...
-      // Add any other IATA codes you see in your CSV: NRT, OKA, PVG, SIN, LHR, etc.
-      NRT: [35.7732, 140.3874],
-      OKA: [26.2048, 127.6460],
-      PVG: [31.1443, 121.8083],
-      SIN: [1.3644, 103.9915],
-      LHR: [51.4700, -0.4543],
-      // Continue adding as needed...
-    };
-
-    // ========== BUILD SUMMARY ========== //
-    function buildSummary(flights) {
-      let totalFlights = 0;
-      let totalFlightHours = 0;
-      let totalCancellations = 0;
-      let totalDiversions = 0;
-
-      let sumDepDelayMin = 0;
-      let sumArrDelayMin = 0;
-      let depDelayCount = 0;
-      let arrDelayCount = 0;
-
-      flights.forEach((f) => {
-        totalFlights++;
-
-        // Canceled?
-        if (String(f.Canceled).toLowerCase() === 'true') {
-          totalCancellations++;
-        }
-        // Diverted?
-        if (f['Diverted To'] && f['Diverted To'].trim() !== '') {
-          totalDiversions++;
-        }
-
-        // Flight hours: "Take off (Actual)" -> "Landing (Actual)" or fallback gate times
-        const depActual = f['Take off (Actual)'] || f['Gate Departure (Actual)'];
-        const arrActual = f['Landing (Actual)'] || f['Gate Arrival (Actual)'];
-        const depDate = new Date(depActual);
-        const arrDate = new Date(arrActual);
-        if (!isNaN(depDate) && !isNaN(arrDate) && arrDate > depDate) {
-          const diffMs = arrDate - depDate;
-          totalFlightHours += diffMs / (1000 * 60 * 60);
-        }
-
-        // Dep Delay: Gate Departure (Actual) - Gate Departure (Scheduled)
-        const depSch = new Date(f['Gate Departure (Scheduled)']);
-        const depAct = new Date(f['Gate Departure (Actual)']);
-        if (!isNaN(depSch) && !isNaN(depAct)) {
-          sumDepDelayMin += (depAct - depSch) / (1000 * 60);
-          depDelayCount++;
-        }
-
-        // Arr Delay: Gate Arrival (Actual) - Gate Arrival (Scheduled)
-        const arrSch = new Date(f['Gate Arrival (Scheduled)']);
-        const arrAct = new Date(f['Gate Arrival (Actual)']);
-        if (!isNaN(arrSch) && !isNaN(arrAct)) {
-          sumArrDelayMin += (arrAct - arrSch) / (1000 * 60);
-          arrDelayCount++;
-        }
-      });
-
-      const avgDepDelay =
-        depDelayCount > 0
-          ? (sumDepDelayMin / depDelayCount).toFixed(1)
-          : 0;
-      const avgArrDelay =
-        arrDelayCount > 0
-          ? (sumArrDelayMin / arrDelayCount).toFixed(1)
-          : 0;
-
-      document.getElementById('total-flights').textContent = totalFlights;
-      document.getElementById('total-flight-hours').textContent =
-        totalFlightHours.toFixed(1);
-      document.getElementById('avg-dep-delay').textContent = avgDepDelay;
-      document.getElementById('avg-arr-delay').textContent = avgArrDelay;
-      document.getElementById('total-cancellations').textContent =
-        totalCancellations;
-      document.getElementById('total-diversions').textContent =
-        totalDiversions;
-    }
-
-    // ========== BUILD MONTHLY FLIGHT CHART ========== //
-    function buildChart(flights) {
-      const flightsByMonth = {};
-      flights.forEach((f) => {
-        const d = new Date(f.Date);
-        if (!isNaN(d)) {
-          const year = d.getFullYear();
-          const month = d.getMonth() + 1; // 1-based
-          const ym = `${year}-${String(month).padStart(2, '0')}`;
-          flightsByMonth[ym] = (flightsByMonth[ym] || 0) + 1;
-        }
-      });
-
-      const labels = Object.keys(flightsByMonth).sort();
-      const data = labels.map((k) => flightsByMonth[k]);
-
-      const ctx = document.getElementById('flightsByMonth').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Flights per Month',
-              data,
-              backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              title: { display: true, text: 'Month (YYYY-MM)' },
-            },
-            y: {
-              title: { display: true, text: 'Flights' },
-              beginAtZero: true,
-            },
-          },
-        },
-      });
-    }
-
-    // ========== BUILD TABLE (INCLUDE ALL COLUMNS) ========== //
-    function buildTable(flights) {
-      const tbody = document.querySelector('#flightsTable tbody');
-      flights.forEach((f) => {
-        const tr = document.createElement('tr');
-
-        // The order of columns matches your CSV header order:
-        const cols = [
-          f.Date,
-          f.Airline,
-          f.Flight,
-          f.From,
-          f.To,
-          f['Dep Terminal'],
-          f['Dep Gate'],
-          f['Arr Terminal'],
-          f['Arr Gate'],
-          f.Canceled,
-          f['Diverted To'],
-          f['Gate Departure (Scheduled)'],
-          f['Gate Departure (Actual)'],
-          f['Take off (Scheduled)'],
-          f['Take off (Actual)'],
-          f['Landing (Scheduled)'],
-          f['Landing (Actual)'],
-          f['Gate Arrival (Scheduled)'],
-          f['Gate Arrival (Actual)'],
-          f['Aircraft Type Name'],
-          f['Tail Number'],
-          f.PNR,
-          f.Seat,
-          f['Seat Type'],
-          f['Cabin Class'],
-          f['Flight Reason'],
-          f.Notes,
-          f['Flight Flighty ID'],
-          f['Airline Flighty ID'],
-          f['Departure Airport Flighty ID'],
-          f['Arrival Airport Flighty ID'],
-          f['Diverted To Airport Flighty ID'],
-          f['Aircraft Type Flighty ID'],
-        ];
-
-        cols.forEach((val) => {
-          const td = document.createElement('td');
-          td.textContent = val || '';
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    // ========== BUILD 3D GLOBE WITH CESIUM ==========
-    function buildGlobe(flights) {
-      // For better imagery, sign up for a free Cesium Ion token if you like:
-      // Cesium.Ion.defaultAccessToken = 'YOUR_TOKEN_HERE';
-
-      const viewer = new Cesium.Viewer('cesiumContainer', {
-        animation: false,
-        timeline: false,
-        baseLayerPicker: true,
-        geocoder: false,
-      });
-
-      // Optionally hide Cesium ion credits
-      viewer.cesiumWidget.creditContainer.style.display = 'none';
-
-      flights.forEach((f) => {
-        const from = f.From;
-        const to = f.To;
-        if (!from || !to) return;
-
-        const fromCoords = airportCoords[from];
-        const toCoords = airportCoords[to];
-        if (!fromCoords || !toCoords) return; // skip if coords missing
-
-        // Cesium expects [lon, lat] order
-        const [lat1, lon1] = fromCoords;
-        const [lat2, lon2] = toCoords;
-
-        viewer.entities.add({
-          polyline: {
-            positions: Cesium.Cartesian3.fromDegreesArray([
-              lon1,
-              lat1,
-              lon2,
-              lat2,
-            ]),
-            width: 2,
-            material: Cesium.Color.fromCssColorString('#007aff').withAlpha(0.7),
-          },
-        });
-      });
-
-      // Fly the camera to a global view
-      viewer.scene.camera.flyHome(2.0);
+  Papa.parse(csvPath, {
+    download: true,
+    header: true,
+    complete: function(results) {
+      const flights = results.data.filter(row => row.Date);
+      processFlights(flights);
     }
   });
+
+  // 2) AIRPORT COORDS - ensure all airports in your data are present
+  const airportCoords = {
+    // Example entries (you must add all your From/To codes):
+    ICN: [37.4602, 126.4407],
+    ATL: [33.6367, -84.4281],
+    LGA: [40.7769, -73.8740],
+    JFK: [40.6413, -73.7781],
+    SFO: [37.6213, -122.3790],
+    LAX: [33.9416, -118.4085],
+    // ...
+  };
+
+  // Earth's radius in miles
+  const EARTH_RADIUS_MI = 3958.8;
+  // Earth's circumference in miles
+  const EARTH_CIRCUM_MI = 24901;
+
+  // We'll store some global references
+  let viewer; // Cesium viewer
+
+  function processFlights(flights) {
+    // ========== Initialize the globe first ==========
+    viewer = new Cesium.Viewer('cesiumContainer', {
+      animation: false,
+      timeline: false,
+      baseLayerPicker: true,
+      geocoder: false
+    });
+    // Optionally hide the Cesium ion credit
+    viewer.cesiumWidget.creditContainer.style.display = 'none';
+
+    // ========== Summaries / Stats Variables ==========
+    let totalFlights = flights.length;
+    let totalDistanceMi = 0;
+    let totalFlightHours = 0;
+    let departureDelayMinSum = 0;
+    let mostFlownAircraftCount = {};
+    let uniqueAirports = new Set();
+    let uniqueAirlines = new Set();
+    let flightsByMonth = {}; // for chart
+
+    // We also want to track which airports we actually use, so we can place a point on the globe
+    let usedAirports = new Set();
+
+    flights.forEach(f => {
+      // Unique Airlines
+      if (f.Airline) uniqueAirlines.add(f.Airline);
+
+      // Distances
+      let fromCode = f.From;
+      let toCode = f.To;
+      if (airportCoords[fromCode] && airportCoords[toCode]) {
+        let dist = computeDistanceMiles(airportCoords[fromCode], airportCoords[toCode]);
+        totalDistanceMi += dist;
+      }
+
+      // Track airports for the globe
+      if (fromCode) usedAirports.add(fromCode);
+      if (toCode) usedAirports.add(toCode);
+
+      // Unique airports set
+      if (fromCode) uniqueAirports.add(fromCode);
+      if (toCode) uniqueAirports.add(toCode);
+
+      // Flight hours
+      let depActual = new Date(f['Take off (Actual)'] || f['Gate Departure (Actual)']);
+      let arrActual = new Date(f['Landing (Actual)'] || f['Gate Arrival (Actual)']);
+      if (!isNaN(depActual) && !isNaN(arrActual) && arrActual > depActual) {
+        let diffMs = arrActual - depActual;
+        let hours = diffMs / (1000 * 60 * 60);
+        totalFlightHours += hours;
+      }
+
+      // Departure delay
+      let depSch = new Date(f['Gate Departure (Scheduled)']);
+      let depAct = new Date(f['Gate Departure (Actual)']);
+      if (!isNaN(depSch) && !isNaN(depAct) && depAct > depSch) {
+        let diffMin = (depAct - depSch) / (1000 * 60);
+        departureDelayMinSum += diffMin;
+      }
+
+      // Track aircraft usage
+      let acType = f['Aircraft Type Name'] || 'Unknown';
+      mostFlownAircraftCount[acType] = (mostFlownAircraftCount[acType] || 0) + 1;
+
+      // Monthly grouping
+      let d = new Date(f.Date);
+      if (!isNaN(d)) {
+        let ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        flightsByMonth[ym] = (flightsByMonth[ym] || 0) + 1;
+      }
+    });
+
+    // ========== Summaries ==========
+    let totalDistanceRounded = Math.round(totalDistanceMi);
+    let timesAroundWorld = (totalDistanceMi / EARTH_CIRCUM_MI).toFixed(2);
+    let delayHours = (departureDelayMinSum / 60).toFixed(1);
+
+    // Flight time in d/h/m
+    let days = Math.floor(totalFlightHours / 24);
+    let hours = Math.floor(totalFlightHours % 24);
+    let leftover = (totalFlightHours - days * 24 - hours).toFixed(1);
+    let leftoverMins = Math.round(leftover * 60);
+    let timeStr = '';
+    if (days > 0) timeStr += `${days}d `;
+    if (hours > 0) timeStr += `${hours}h `;
+    if (leftoverMins > 0) timeStr += `${leftoverMins}m`;
+    if (!timeStr) timeStr = '0h';
+
+    // Most flown aircraft
+    let mostFlown = 'None';
+    let maxCount = 0;
+    for (let ac in mostFlownAircraftCount) {
+      if (mostFlownAircraftCount[ac] > maxCount) {
+        mostFlown = ac;
+        maxCount = mostFlownAircraftCount[ac];
+      }
+    }
+
+    // Populate summary cards
+    document.getElementById('total-flights').textContent = totalFlights;
+    document.getElementById('total-distance').textContent = totalDistanceRounded;
+    document.getElementById('around-world').textContent = timesAroundWorld;
+    document.getElementById('total-flight-time').textContent = timeStr;
+    document.getElementById('unique-airports').textContent = uniqueAirports.size;
+    document.getElementById('unique-airlines').textContent = uniqueAirlines.size;
+    document.getElementById('delay-hours').textContent = delayHours;
+    document.getElementById('most-flown-aircraft').textContent = mostFlown;
+
+    // ========== Build monthly chart ==========
+    buildMonthlyChart(flightsByMonth);
+
+    // ========== Build optional table ==========
+    buildFlightTable(flights);
+
+    // ========== Add airports as dots on the globe ==========
+    usedAirports.forEach(code => {
+      if (!airportCoords[code]) return;
+      let [lat, lon] = airportCoords[code];
+      viewer.entities.add({
+        name: code,
+        position: Cesium.Cartesian3.fromDegrees(lon, lat),
+        point: {
+          pixelSize: 6,
+          color: Cesium.Color.RED.withAlpha(0.8),
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 1
+        },
+        label: {
+          text: code,
+          font: '14px sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          outlineWidth: 2,
+          pixelOffset: new Cesium.Cartesian2(0, -18) // offset label above dot
+        }
+      });
+    });
+
+    // ========== Draw flight routes as polylines ==========
+    flights.forEach(f => {
+      let from = f.From, to = f.To;
+      if (!airportCoords[from] || !airportCoords[to]) return;
+      let [lat1, lon1] = airportCoords[from];
+      let [lat2, lon2] = airportCoords[to];
+      viewer.entities.add({
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray([lon1, lat1, lon2, lat2]),
+          width: 2,
+          material: Cesium.Color.fromCssColorString('#007aff').withAlpha(0.7)
+        }
+      });
+    });
+
+    // Fly the camera to a global view
+    viewer.scene.camera.flyHome(2.0);
+  }
+
+  // ========== DISTANCE (Haversine) ==========
+  function computeDistanceMiles([lat1, lon1], [lat2, lon2]) {
+    let toRad = angle => (angle * Math.PI) / 180;
+    let dLat = toRad(lat2 - lat1);
+    let dLon = toRad(lon2 - lon1);
+    let rLat1 = toRad(lat1);
+    let rLat2 = toRad(lat2);
+
+    let a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) *
+        Math.sin(dLon / 2) *
+        Math.cos(rLat1) *
+        Math.cos(rLat2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return EARTH_RADIUS_MI * c;
+  }
+
+  // ========== MONTHLY CHART (Chart.js) ==========
+  function buildMonthlyChart(flightsByMonth) {
+    let labels = Object.keys(flightsByMonth).sort();
+    let data = labels.map(k => flightsByMonth[k]);
+
+    let ctx = document.getElementById('flightChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Flights per Month',
+            data,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            fill: true,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Month (YYYY-MM)' } },
+          y: { title: { display: true, text: 'Flights' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // ========== OPTIONAL FLIGHTS TABLE ==========
+  function buildFlightTable(flights) {
+    let tbody = document.querySelector('#flightsTable tbody');
+    tbody.innerHTML = '';
+
+    flights.forEach(f => {
+      let tr = document.createElement('tr');
+
+      let distanceMi = 0;
+      if (airportCoords[f.From] && airportCoords[f.To]) {
+        distanceMi = computeDistanceMiles(airportCoords[f.From], airportCoords[f.To]);
+      }
+      let depSch = new Date(f['Gate Departure (Scheduled)']);
+      let depAct = new Date(f['Gate Departure (Actual)']);
+      let arrSch = new Date(f['Gate Arrival (Scheduled)']);
+      let arrAct = new Date(f['Gate Arrival (Actual)']);
+      let depDelay = 0;
+      let arrDelay = 0;
+
+      if (!isNaN(depSch) && !isNaN(depAct) && depAct > depSch) {
+        depDelay = (depAct - depSch) / (1000 * 60);
+      }
+      if (!isNaN(arrSch) && !isNaN(arrAct) && arrAct > arrSch) {
+        arrDelay = (arrAct - arrSch) / (1000 * 60);
+      }
+
+      let rowData = [
+        f.Date,
+        f.Airline,
+        f.Flight,
+        f.From,
+        f.To,
+        distanceMi.toFixed(0),
+        f['Aircraft Type Name'] || '',
+        depDelay.toFixed(1),
+        arrDelay.toFixed(1)
+      ];
+
+      rowData.forEach(val => {
+        let td = document.createElement('td');
+        td.textContent = val || '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+});
 </script>
