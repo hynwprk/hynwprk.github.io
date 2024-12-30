@@ -4,17 +4,10 @@ title: "flights"
 permalink: /flights/
 ---
 
-<!-- 
-Dark-themed “Flights” page:
-- Summaries (total flights, total distance in XXXK, times-around-world with +, most visited airport uppercase, #airports, #airlines)
-- 3D globe
-- Table (new->old)
-- Charts:
-   1) Top 10 visited airports
-   2) Top Routes (both directions)
-   3) Flights by weekday (Sun–Sat)
-No day-of-year distribution, no flight time.
--->
+<!-- Capture the path of the latest FlightyExport CSV -->
+{% assign flightyFiles = site.static_files | where_exp: "f","f.path contains 'FlightyExport-'" %}
+{% assign sortedFlightyFiles = flightyFiles | sort: 'path' %}
+{% assign latestFlighty = sortedFlightyFiles | last %}
 
 <style>
 /* ===================== DARK THEME ===================== */
@@ -151,19 +144,17 @@ body {
   </div>
 </div>
 
-<!-- ========== TOP 10 VISITED AIRPORTS ========== -->
+<!-- ========== TOP VISITED AIRPORTS (Top 8) ========== -->
 <div class="flight-section" id="top-airports">
-  <h2>Top 10 Visited Airports</h2>
-  <p>Count how often each airport appears in From/To, then show the top 10.</p>
+  <h2>Top 8 Visited Airports</h2>
   <div class="chart-container">
     <canvas id="topAirportsChart"></canvas>
   </div>
 </div>
 
-<!-- ========== TOP ROUTES (BOTH WAYS) ========== -->
+<!-- ========== TOP ROUTES (BOTH WAYS, Top 8) ========== -->
 <div class="flight-section" id="top-routes">
-  <h2>Top Routes</h2>
-  <p>Treat “ABC → XYZ” same as “XYZ → ABC”. Bar chart of top route counts.</p>
+  <h2>Top Routes (Both Ways)</h2>
   <div class="chart-container">
     <canvas id="topRoutesChart"></canvas>
   </div>
@@ -172,7 +163,6 @@ body {
 <!-- ========== WEEKDAY CHART (SUN-SAT) ========== -->
 <div class="flight-section" id="weekday-dist">
   <h2>Flights by Day of Week</h2>
-  <p>Counts flights per weekday (Sun–Sat).</p>
   <div class="chart-container">
     <canvas id="weekdayChart"></canvas>
   </div>
@@ -208,12 +198,15 @@ body {
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+  // Airport-locations CSV
   const airportLocCSV = "{{ '/assets/data/airport-locations.csv' | relative_url }}";
-  const flightDataCSV = "{{ '/assets/data/FlightyExport-2024-12-30.csv' | relative_url }}";
+
+  // Use Jekyll to determine the path of the latest Flighty CSV
+  const flightDataCSV = "{{ latestFlighty.path | relative_url }}";
 
   let airportDB = {};
 
-  // Parse airport CSV
+  // Parse airport CSV first
   Papa.parse(airportLocCSV, {
     download: true,
     header: true,
@@ -235,28 +228,29 @@ document.addEventListener("DOMContentLoaded", function() {
       download: true,
       header: true,
       complete: function(results) {
+        // Filter out rows with no Date
         let flights = results.data.filter(f => f.Date);
+
         // Sort newest -> oldest
         flights.sort((a, b) => parseDateUTC(b.Date) - parseDateUTC(a.Date));
+
         buildVisualization(flights);
       }
     });
   }
 
-  // Earth
-  const EARTH_RADIUS_MI = 3958.8;
   const EARTH_CIRCUM_MI = 24901;
-
   let viewer;
 
   function buildVisualization(flights) {
-    // Initialize Cesium
+    // Initialize Cesium viewer
     viewer = new Cesium.Viewer("cesiumContainer", {
       animation: false,
       timeline: false,
       baseLayerPicker: true,
       geocoder: false
     });
+    // Hide Cesium's default credits
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
     let totalFlights = flights.length;
@@ -264,18 +258,13 @@ document.addEventListener("DOMContentLoaded", function() {
     let uniqueAirports = new Set();
     let uniqueAirlines = new Set();
 
-    // For top airports
     let airportVisits = {};
-    // For top routes (both ways => sort the 2 codes for the route key)
     let routeVisits = {};
-    // For flights by weekday
-    // Sunday=0, Monday=1, ..., Saturday=6
-    let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0];
+    let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0]; // Sun=0..Sat=6
 
     flights.forEach(f => {
-      let fromCode = f.From;
-      let toCode = f.To;
-      if (f.Airline) uniqueAirlines.add(f.Airline);
+      let fromCode = (f.From || "").trim();
+      let toCode = (f.To || "").trim();
 
       // Distance
       if (airportDB[fromCode] && airportDB[toCode]) {
@@ -293,55 +282,63 @@ document.addEventListener("DOMContentLoaded", function() {
         airportVisits[toCode] = (airportVisits[toCode] || 0) + 1;
       }
 
-      // Top routes (both ways)
+      // Routes (both ways)
       if (fromCode && toCode) {
-        let sortedPair = [fromCode, toCode].sort();
-        let routeKey = sortedPair[0] + "-" + sortedPair[1];
-        routeVisits[routeKey] = (routeVisits[routeKey] || 0) + 1;
+        let sortedPair = [fromCode.toUpperCase(), toCode.toUpperCase()].sort();
+        let routeLabel = sortedPair.join(" ↔ ");
+        routeVisits[routeLabel] = (routeVisits[routeLabel] || 0) + 1;
       }
 
-      // Day-of-week
+      // Weekday
       let dt = parseDateUTC(f.Date);
       if (dt) {
-        let weekday = dt.getUTCDay(); // 0..6
+        let weekday = dt.getUTCDay();
         flightsByWeekday[weekday]++;
+      }
+
+      // Airlines
+      if (f.Airline) {
+        uniqueAirlines.add(f.Airline.trim());
       }
     });
 
     // Summaries
-    let distK = Math.floor(totalDistance / 1000) + "k"; // e.g. 153K
-    let rawTimes = totalDistance / EARTH_CIRCUM_MI;
-    let timesFloored = Math.floor(rawTimes * 10) / 10; 
-    let timesLabel = timesFloored.toFixed(1); 
-
     document.getElementById("total-flights").textContent = totalFlights;
-    document.getElementById("total-distance").textContent = distK;
-    document.getElementById("times-around-world").textContent = timesLabel;
     document.getElementById("unique-airports").textContent = uniqueAirports.size;
     document.getElementById("unique-airlines").textContent = uniqueAirlines.size;
 
-    // Most visited airport (uppercase)
+    // Distance summary
+    let distK = Math.floor(totalDistance / 1000) + "k";
+    document.getElementById("total-distance").textContent = distK;
+
+    // Times-around-world
+    let rawTimes = totalDistance / EARTH_CIRCUM_MI;
+    let timesFloored = Math.floor(rawTimes * 10) / 10;
+    let timesLabel = timesFloored.toFixed(1);
+    document.getElementById("times-around-world").textContent = timesLabel;
+
+    // Most visited airport
     let visitsArray = Object.entries(airportVisits);
     visitsArray.sort((a, b) => b[1] - a[1]);
     let mostVisited = visitsArray.length ? visitsArray[0][0].toUpperCase() : "---";
     document.getElementById("most-visited-airport").textContent = mostVisited;
 
-    // Build table
+    // Table
     buildFlightTable(flights);
 
-    // Plot on globe
+    // Globe
     plotOnGlobe(flights, uniqueAirports);
 
-    // Build charts
+    // Charts
     buildTopAirportsChart(airportVisits);
     buildTopRoutesChart(routeVisits);
     buildWeekdayChart(flightsByWeekday);
   }
 
-  // Parse date/time as UTC
   function parseDateUTC(dateStr) {
     if (!dateStr) return null;
     let str = dateStr.trim();
+    // If no timezone info, assume UTC
     if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
       str += "Z";
     }
@@ -349,7 +346,6 @@ document.addEventListener("DOMContentLoaded", function() {
     return isNaN(d) ? null : d;
   }
 
-  // Distance
   function computeDistanceMiles([lat1, lon1], [lat2, lon2]) {
     let toRad = a => (a * Math.PI) / 180;
     let dLat = toRad(lat2 - lat1);
@@ -361,7 +357,7 @@ document.addEventListener("DOMContentLoaded", function() {
       Math.sin(dLat / 2) ** 2 +
       Math.sin(dLon / 2) ** 2 * Math.cos(rLat1) * Math.cos(rLat2);
     let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return 3958.8 * c; 
+    return 3958.8 * c;
   }
 
   function plotOnGlobe(flights, airportSet) {
@@ -406,6 +402,7 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     });
 
+    // Zoom out
     viewer.scene.camera.flyHome(2.0);
   }
 
@@ -437,14 +434,14 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // ========== Top 10 Visited Airports Chart ==========
+  // ========== Top Airports (Top 8) ==========
   function buildTopAirportsChart(airportVisits) {
     let visitsArray = Object.entries(airportVisits);
     visitsArray.sort((a, b) => b[1] - a[1]);
-    let top10 = visitsArray.slice(0, 10);
+    let top8 = visitsArray.slice(0, 8);
 
-    let labels = top10.map(item => item[0]);
-    let data = top10.map(item => item[1]);
+    let labels = top8.map(item => item[0]);
+    let data = top8.map(item => item[1]);
 
     let ctx = document.getElementById("topAirportsChart").getContext("2d");
     new Chart(ctx, {
@@ -453,7 +450,6 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "Visits",
             data,
             backgroundColor: "rgba(54, 162, 235, 0.6)"
           }
@@ -463,36 +459,30 @@ document.addEventListener("DOMContentLoaded", function() {
         responsive: true,
         scales: {
           x: {
-            title: { display: true, text: "Airport", color: "#eee" },
+            title: { display: false },
             ticks: { color: "#eee" }
           },
           y: {
-            title: { display: true, text: "Visits", color: "#eee" },
+            title: { display: false },
             beginAtZero: true,
             ticks: { color: "#eee" }
           }
         },
         plugins: {
-          legend: { 
-            labels: { color: "#eee" }
-          }
+          legend: { display: false }
         }
       }
     });
   }
 
-  // ========== Top Routes Chart (both ways) ==========
+  // ========== Top Routes (Top 8) ==========
   function buildTopRoutesChart(routeVisits) {
-    // routeKey => count
     let routesArray = Object.entries(routeVisits);
-    // Sort descending
     routesArray.sort((a, b) => b[1] - a[1]);
-    // Let's take top 10
-    let top10 = routesArray.slice(0, 10);
+    let top8 = routesArray.slice(0, 8);
 
-    // Example routeKey: "ATL-ICN"
-    let labels = top10.map(r => r[0]);
-    let data = top10.map(r => r[1]);
+    let labels = top8.map(r => r[0]);
+    let data = top8.map(r => r[1]);
 
     let ctx = document.getElementById("topRoutesChart").getContext("2d");
     new Chart(ctx, {
@@ -501,7 +491,6 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "Route Count",
             data,
             backgroundColor: "rgba(153, 102, 255, 0.6)"
           }
@@ -511,19 +500,17 @@ document.addEventListener("DOMContentLoaded", function() {
         responsive: true,
         scales: {
           x: {
-            title: { display: true, text: "Route (From-To)", color: "#eee" },
+            title: { display: false },
             ticks: { color: "#eee" }
           },
           y: {
-            title: { display: true, text: "Count", color: "#eee" },
+            title: { display: false },
             beginAtZero: true,
             ticks: { color: "#eee" }
           }
         },
         plugins: {
-          legend: {
-            labels: { color: "#eee" }
-          }
+          legend: { display: false }
         }
       }
     });
@@ -531,9 +518,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // ========== Weekday Chart (Sun–Sat) ==========
   function buildWeekdayChart(flightsByWeekday) {
-    // flightsByWeekday = array of length 7, index = 0..6 => Sunday..Saturday
     let labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    let data = flightsByWeekday; // index0 => Sunday, etc.
+    let data = flightsByWeekday;
 
     let ctx = document.getElementById("weekdayChart").getContext("2d");
     new Chart(ctx, {
@@ -542,7 +528,6 @@ document.addEventListener("DOMContentLoaded", function() {
         labels,
         datasets: [
           {
-            label: "Flights",
             data,
             backgroundColor: "rgba(255, 159, 64, 0.6)"
           }
@@ -552,17 +537,17 @@ document.addEventListener("DOMContentLoaded", function() {
         responsive: true,
         scales: {
           x: {
-            title: { display: true, text: "Weekday", color: "#eee" },
+            title: { display: false },
             ticks: { color: "#eee" }
           },
           y: {
-            title: { display: true, text: "Flights", color: "#eee" },
+            title: { display: false },
             beginAtZero: true,
             ticks: { color: "#eee" }
           }
         },
         plugins: {
-          legend: { labels: { color: "#eee" } }
+          legend: { display: false }
         }
       }
     });
