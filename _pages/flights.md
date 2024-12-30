@@ -1,17 +1,19 @@
 ---
 layout: page
-title: "Flights"
+title: "flights"
 permalink: /flights/
 ---
 
 <!-- 
-  Dark-themed “Flights” page:
-    - Summaries: total flights, total distance in “xxx K” style, times-around-world (+ suffix),
-      #unique airports, #unique airlines, and a card for MOST VISITED AIRPORT (uppercase).
-    - 3D globe labeled "Flights"
-    - Table sorted newest → oldest
-    - Day-of-year chart
-    - Top-10 visited airports chart
+Dark-themed “Flights” page:
+- Summaries (total flights, total distance in XXXK, times-around-world with +, most visited airport uppercase, #airports, #airlines)
+- 3D globe
+- Table (new->old)
+- Charts:
+   1) Top 10 visited airports
+   2) Top Routes (both directions)
+   3) Flights by weekday (Sun–Sat)
+No day-of-year distribution, no flight time.
 -->
 
 <style>
@@ -24,7 +26,6 @@ body {
   padding: 0;
 }
 
-/* Section containers */
 .flight-section {
   margin: 2rem auto;
   padding: 1.5rem;
@@ -34,7 +35,6 @@ body {
   border-radius: 6px;
 }
 
-/* Headings */
 .flight-section h2 {
   margin-top: 0;
   font-size: 1.4rem;
@@ -43,7 +43,6 @@ body {
   padding-bottom: 0.5rem;
 }
 
-/* 3D globe container */
 #cesiumContainer {
   width: 100%;
   height: 550px;
@@ -81,18 +80,19 @@ body {
   color: #ccc;
 }
 
-/* Chart containers */
+/* Charts */
 .chart-container {
   margin-top: 1rem;
 }
 
 #topAirportsChart,
-#dayOfYearChart {
+#topRoutesChart,
+#weekdayChart {
   max-width: 100%;
   margin: 1rem 0;
 }
 
-/* Table for flights */
+/* Table */
 #flightsTable {
   width: 100%;
   border-collapse: collapse;
@@ -160,18 +160,27 @@ body {
   </div>
 </div>
 
-<!-- ========== DAY-OF-YEAR DISTRIBUTION ========== -->
-<div class="flight-section" id="day-of-year-dist">
-  <h2>When Do I Fly in a Year?</h2>
-  <p>Flights by day-of-year (1-365/366)</p>
+<!-- ========== TOP ROUTES (BOTH WAYS) ========== -->
+<div class="flight-section" id="top-routes">
+  <h2>Top Routes</h2>
+  <p>Treat “ABC → XYZ” same as “XYZ → ABC”. Bar chart of top route counts.</p>
   <div class="chart-container">
-    <canvas id="dayOfYearChart"></canvas>
+    <canvas id="topRoutesChart"></canvas>
   </div>
 </div>
 
-<!-- ========== FLIGHT TABLE (Newest → Oldest) ========== -->
+<!-- ========== WEEKDAY CHART (SUN-SAT) ========== -->
+<div class="flight-section" id="weekday-dist">
+  <h2>Flights by Day of Week</h2>
+  <p>Counts flights per weekday (Sun–Sat).</p>
+  <div class="chart-container">
+    <canvas id="weekdayChart"></canvas>
+  </div>
+</div>
+
+<!-- ========== FLIGHT TABLE (NEW → OLD) ========== -->
 <div class="flight-section" id="flight-table">
-  <h2>All Flights (New → Old)</h2>
+  <h2>All Flights</h2>
   <table id="flightsTable">
     <thead>
       <tr>
@@ -199,13 +208,12 @@ body {
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // Paths
   const airportLocCSV = "{{ '/assets/data/airport-locations.csv' | relative_url }}";
   const flightDataCSV = "{{ '/assets/data/FlightyExport-2024-12-30.csv' | relative_url }}";
 
   let airportDB = {};
 
-  // 1) Parse airport-locations.csv
+  // Parse airport CSV
   Papa.parse(airportLocCSV, {
     download: true,
     header: true,
@@ -228,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function() {
       header: true,
       complete: function(results) {
         let flights = results.data.filter(f => f.Date);
-        // Sort descending (newest → oldest)
+        // Sort newest -> oldest
         flights.sort((a, b) => parseDateUTC(b.Date) - parseDateUTC(a.Date));
         buildVisualization(flights);
       }
@@ -251,23 +259,25 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
-    // Summaries
     let totalFlights = flights.length;
     let totalDistance = 0;
     let uniqueAirports = new Set();
     let uniqueAirlines = new Set();
-    let airportVisits = {}; // for top 10 & most visited airport
-    let flightsByDayOfYear = {};
-    for (let i = 1; i <= 366; i++) {
-      flightsByDayOfYear[i] = 0;
-    }
+
+    // For top airports
+    let airportVisits = {};
+    // For top routes (both ways => sort the 2 codes for the route key)
+    let routeVisits = {};
+    // For flights by weekday
+    // Sunday=0, Monday=1, ..., Saturday=6
+    let flightsByWeekday = [0, 0, 0, 0, 0, 0, 0];
 
     flights.forEach(f => {
       let fromCode = f.From;
       let toCode = f.To;
       if (f.Airline) uniqueAirlines.add(f.Airline);
 
-      // Distances
+      // Distance
       if (airportDB[fromCode] && airportDB[toCode]) {
         let dist = computeDistanceMiles(airportDB[fromCode], airportDB[toCode]);
         totalDistance += dist;
@@ -283,34 +293,35 @@ document.addEventListener("DOMContentLoaded", function() {
         airportVisits[toCode] = (airportVisits[toCode] || 0) + 1;
       }
 
-      // Day-of-year chart
-      let d = parseDateUTC(f.Date);
-      if (d) {
-        let dayOfYear = getDayOfYear(d);
-        if (dayOfYear >= 1 && dayOfYear <= 366) {
-          flightsByDayOfYear[dayOfYear]++;
-        }
+      // Top routes (both ways)
+      if (fromCode && toCode) {
+        let sortedPair = [fromCode, toCode].sort();
+        let routeKey = sortedPair[0] + "-" + sortedPair[1];
+        routeVisits[routeKey] = (routeVisits[routeKey] || 0) + 1;
+      }
+
+      // Day-of-week
+      let dt = parseDateUTC(f.Date);
+      if (dt) {
+        let weekday = dt.getUTCDay(); // 0..6
+        flightsByWeekday[weekday]++;
       }
     });
 
-    // Summaries: totalDistance => "XXK" style
-    // e.g. 143422 => 143 K
-    let distK = Math.floor(totalDistance / 1000); 
-    let distLabel = distK + "K";
-
-    // Times around world => round down to 1 decimal => + suffix
-    let rawTimes = (totalDistance / EARTH_CIRCUM_MI);
-    let timesFloored = Math.floor(rawTimes * 10) / 10; // e.g. 2.3
-    let timesLabel = timesFloored.toFixed(1) + "+";   // e.g. "2.3+"
+    // Summaries
+    let distK = Math.floor(totalDistance / 1000) + "k"; // e.g. 153K
+    let rawTimes = totalDistance / EARTH_CIRCUM_MI;
+    let timesFloored = Math.floor(rawTimes * 10) / 10; 
+    let timesLabel = timesFloored.toFixed(1); 
 
     document.getElementById("total-flights").textContent = totalFlights;
-    document.getElementById("total-distance").textContent = distLabel;
+    document.getElementById("total-distance").textContent = distK;
     document.getElementById("times-around-world").textContent = timesLabel;
     document.getElementById("unique-airports").textContent = uniqueAirports.size;
     document.getElementById("unique-airlines").textContent = uniqueAirlines.size;
 
     // Most visited airport (uppercase)
-    let visitsArray = Object.entries(airportVisits); // [[code, count], ...]
+    let visitsArray = Object.entries(airportVisits);
     visitsArray.sort((a, b) => b[1] - a[1]);
     let mostVisited = visitsArray.length ? visitsArray[0][0].toUpperCase() : "---";
     document.getElementById("most-visited-airport").textContent = mostVisited;
@@ -323,14 +334,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Build charts
     buildTopAirportsChart(airportVisits);
-    buildDayOfYearChart(flightsByDayOfYear);
+    buildTopRoutesChart(routeVisits);
+    buildWeekdayChart(flightsByWeekday);
   }
 
   // Parse date/time as UTC
   function parseDateUTC(dateStr) {
     if (!dateStr) return null;
     let str = dateStr.trim();
-    // If no timezone indicated, forcibly append "Z" => treat as UTC
     if (!/[zZ]|([+\-]\d{2}:?\d{2})/.test(str)) {
       str += "Z";
     }
@@ -338,16 +349,7 @@ document.addEventListener("DOMContentLoaded", function() {
     return isNaN(d) ? null : d;
   }
 
-  // Day-of-year
-  function getDayOfYear(dateObj) {
-    let start = new Date(Date.UTC(dateObj.getUTCFullYear(), 0, 1));
-    // difference in ms from Jan 1
-    let diff = dateObj.getTime() - start.getTime();
-    let day = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1; 
-    return day; // 1..365/366
-  }
-
-  // Distance (Haversine)
+  // Distance
   function computeDistanceMiles([lat1, lon1], [lat2, lon2]) {
     let toRad = a => (a * Math.PI) / 180;
     let dLat = toRad(lat2 - lat1);
@@ -359,11 +361,11 @@ document.addEventListener("DOMContentLoaded", function() {
       Math.sin(dLat / 2) ** 2 +
       Math.sin(dLon / 2) ** 2 * Math.cos(rLat1) * Math.cos(rLat2);
     let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return 3958.8 * c; // miles
+    return 3958.8 * c; 
   }
 
-  // Plot flights on globe
   function plotOnGlobe(flights, airportSet) {
+    // Plot airports
     airportSet.forEach(code => {
       let coords = airportDB[code];
       if (!coords) return;
@@ -388,6 +390,7 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     });
 
+    // Plot routes
     flights.forEach(f => {
       let fromCode = f.From;
       let toCode = f.To;
@@ -406,12 +409,10 @@ document.addEventListener("DOMContentLoaded", function() {
     viewer.scene.camera.flyHome(2.0);
   }
 
-  // Build flight table
   function buildFlightTable(flights) {
     let tbody = document.querySelector("#flightsTable tbody");
     tbody.innerHTML = "";
 
-    // flights is already sorted newest->oldest
     flights.forEach(f => {
       let tr = document.createElement("tr");
       let dist = 0;
@@ -436,7 +437,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Build top-10 airports chart
+  // ========== Top 10 Visited Airports Chart ==========
   function buildTopAirportsChart(airportVisits) {
     let visitsArray = Object.entries(airportVisits);
     visitsArray.sort((a, b) => b[1] - a[1]);
@@ -472,6 +473,54 @@ document.addEventListener("DOMContentLoaded", function() {
           }
         },
         plugins: {
+          legend: { 
+            labels: { color: "#eee" }
+          }
+        }
+      }
+    });
+  }
+
+  // ========== Top Routes Chart (both ways) ==========
+  function buildTopRoutesChart(routeVisits) {
+    // routeKey => count
+    let routesArray = Object.entries(routeVisits);
+    // Sort descending
+    routesArray.sort((a, b) => b[1] - a[1]);
+    // Let's take top 10
+    let top10 = routesArray.slice(0, 10);
+
+    // Example routeKey: "ATL-ICN"
+    let labels = top10.map(r => r[0]);
+    let data = top10.map(r => r[1]);
+
+    let ctx = document.getElementById("topRoutesChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Route Count",
+            data,
+            backgroundColor: "rgba(153, 102, 255, 0.6)"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: { display: true, text: "Route (From-To)", color: "#eee" },
+            ticks: { color: "#eee" }
+          },
+          y: {
+            title: { display: true, text: "Count", color: "#eee" },
+            beginAtZero: true,
+            ticks: { color: "#eee" }
+          }
+        },
+        plugins: {
           legend: {
             labels: { color: "#eee" }
           }
@@ -480,25 +529,22 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Build day-of-year chart
-  function buildDayOfYearChart(flightsByDayOfYear) {
-    let labels = [];
-    let data = [];
-    for (let day = 1; day <= 366; day++) {
-      labels.push(day);
-      data.push(flightsByDayOfYear[day]);
-    }
+  // ========== Weekday Chart (Sun–Sat) ==========
+  function buildWeekdayChart(flightsByWeekday) {
+    // flightsByWeekday = array of length 7, index = 0..6 => Sunday..Saturday
+    let labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let data = flightsByWeekday; // index0 => Sunday, etc.
 
-    let ctx = document.getElementById("dayOfYearChart").getContext("2d");
+    let ctx = document.getElementById("weekdayChart").getContext("2d");
     new Chart(ctx, {
       type: "bar",
       data: {
         labels,
         datasets: [
           {
-            label: "Flights per Day of Year",
+            label: "Flights",
             data,
-            backgroundColor: "rgba(255, 206, 86, 0.6)"
+            backgroundColor: "rgba(255, 159, 64, 0.6)"
           }
         ]
       },
@@ -506,7 +552,7 @@ document.addEventListener("DOMContentLoaded", function() {
         responsive: true,
         scales: {
           x: {
-            title: { display: true, text: "Day of Year", color: "#eee" },
+            title: { display: true, text: "Weekday", color: "#eee" },
             ticks: { color: "#eee" }
           },
           y: {
@@ -516,9 +562,7 @@ document.addEventListener("DOMContentLoaded", function() {
           }
         },
         plugins: {
-          legend: {
-            labels: { color: "#eee" }
-          }
+          legend: { labels: { color: "#eee" } }
         }
       }
     });
