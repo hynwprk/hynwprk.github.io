@@ -4,7 +4,8 @@ github_users:
 repo_description_lines_max: 2
 
 github_repos:
-  -hynwprk/hynwprk.github.io
+  - hynwprk/hynwprk.github.io
+  - centerforaisafety/hle
   - alshedivat/al-folio
   - jekyll/jekyll
   - twbs/bootstrap

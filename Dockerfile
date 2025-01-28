@@ -59,6 +59,7 @@ ADD Gemfile /srv/jekyll
 # set the working directory
 WORKDIR /srv/jekyll
 
+
 # install jekyll and dependencies
 RUN gem install --no-document jekyll bundler
 RUN bundle install --no-cache
