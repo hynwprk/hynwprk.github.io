@@ -9,9 +9,8 @@ profile:
   image: prof_pic.jpg
   image_circular: false # crops the image to make it circular
   more_info: >
-    <p>555 your office number</p>
-    <p>550 W 114th St</p>
-    <p>New York, NY 10025</p>
+    <p>388 Harvard St</p>
+    <p>Cambridge, MA 02138</p>
 
 news: true # includes a list of news items
 selected_papers: true # includes a list of papers marked as "selected={true}"
