@@ -27,8 +27,6 @@ I previously was a [research intern](https://www.lgresearch.ai/news/view?seq=438
 
 I also work on international technology cooperation. Find my recent involvement at the [U.S.-ROK-Japan Trilateral Global Leadership Youth Summit](/assets/pdf/trilateral.pdf).
 
-I spend a lot of time at different universities around the world. 
-
 My [erdos number](https://en.wikipedia.org/wiki/Erdős_number) is 3.
 
 I use [colemak](https://colemak.com).
