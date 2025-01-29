@@ -31,7 +31,7 @@ I spend a lot of time at different universities around the world.
 
 My [erdos number](https://en.wikipedia.org/wiki/Erdős_number) is 3.
 
-I use [colemak](www.colemak.com).
+I use [colemak](https://colemak.com).
 
 I have recieved a scoe of 25 on the 2024 Putnam Competition placing top 580th in North America.
 
