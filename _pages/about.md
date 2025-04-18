@@ -25,7 +25,7 @@ In my first two years of undergrad at Carnegie Mellon, I have completed 12 [grad
 
 I previously was a [research intern](https://www.lgresearch.ai/news/view?seq=438) at [LG AI Research](https://www.lgresearch.ai) where I worked on Riemannian Diffusion Models.
 
-I have received a score of 25 on the 2024 Putnam Competition placing top 580th in North America.
+I have received a score of 25 on the 2023 Putnam Competition placing top 580th in North America.
 
 My [erdos number](https://en.wikipedia.org/wiki/Erdős_number) is 3.
 

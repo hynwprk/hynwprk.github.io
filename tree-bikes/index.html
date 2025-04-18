@@ -1,0 +1,240 @@
+---
+layout: default
+title: tree bikes
+permalink: /tree-bikes/ # Explicitly set the URL
+---
+
+<style>
+/* Global Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --stanford-red: #8C1515;
+    --text-primary: #1d1d1f;
+    --text-secondary: #515154;
+    --background-light: #fbfbfd;
+    --background-card: #ffffff;
+    --border-color: #d2d2d7;
+    --button-hover: #a81a1a;
+    --focus-ring: rgba(140, 21, 21, 0.2);
+    --animation-duration: 0.6s;
+}
+
+/* Overriding body styles from theme that might conflict */
+body.fixed-top-nav, body.sticky-bottom-footer {
+    padding-top: 0 !important; /* Remove theme's navbar padding */
+}
+
+/* Apply some base body styles directly, might need adjustments */
+.container[role="main"] { /* Target the main content container created by the layout */
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: #e9ecef; /* Changed to light gray */
+    max-width: none; /* Allow full width control */
+    padding: 0; /* Remove container padding */
+    margin-top: 0 !important; /* Remove theme's top margin */
+}
+
+/* Keep original Header styles, but adjust context */
+header#tree-bikes-header { /* Add ID to scope */
+    margin-top: 4rem; /* Added margin to push content down */
+    background-color: var(--background-card);
+    color: var(--text-primary);
+    padding: 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+    opacity: 0;
+    animation: fadeIn var(--animation-duration) ease-out forwards;
+}
+
+header#tree-bikes-header h1 {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--stanford-red);
+}
+
+header#tree-bikes-header p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+/* Keep original Main content area styles, but adjust context */
+main#tree-bikes-main { /* Add ID to scope */
+    flex-grow: 1;
+    width: 100%;
+    max-width: 760px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* Keep original Sections styles */
+#hero, #google-form-section { /* Keep original IDs for now */
+    background-color: var(--background-card);
+    padding: 35px 40px;
+    margin-bottom: 35px;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp var(--animation-duration) ease-out forwards;
+}
+
+#google-form-section { /* Keep stagger */
+    animation-delay: 0.15s;
+}
+
+
+#hero h2, #google-form-section h2 {
+    color: var(--text-primary);
+    font-size: 1.9rem; /* Slightly larger */
+    font-weight: 600;
+    margin-bottom: 18px;
+    border-bottom: none; /* Remove border */
+    padding-bottom: 0;
+}
+
+#hero p, #google-form-section p {
+    margin-bottom: 18px;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Keep original Google Form Specifics */
+#google-form-section p:first-of-type {
+    margin-bottom: 30px;
+}
+
+.google-form-container {
+    max-width: 100%;
+    margin: 20px auto 0;
+    position: relative; /* Needed for aspect ratio padding trick if used */
+    overflow: hidden; /* Hide anything outside the container */
+}
+
+.google-form-container iframe {
+    /* Make iframe responsive */
+    display: block; /* Remove extra space below */
+    margin: 0 auto; /* Center */
+    max-width: 100%; /* Ensure it doesn't overflow */
+    border: 1px solid var(--border-color); /* Optional: Add a subtle border */
+    border-radius: 8px; /* Optional: Rounded corners */
+}
+
+
+/* Keep original Footer styles, but adjust context */
+footer#tree-bikes-footer { /* Add ID to scope */
+    text-align: center;
+    margin-top: 40px; /* Add some margin above footer */
+    padding: 30px 20px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-card);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out 0.3s forwards;
+}
+
+footer#tree-bikes-footer .disclaimer {
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+footer#tree-bikes-footer a { /* Ensure links inherit color correctly */
+    color: var(--stanford-red);
+    text-decoration: none;
+}
+footer#tree-bikes-footer a:hover {
+    text-decoration: underline;
+}
+
+
+/* Keep original AI Tag Styling */
+.ai-tag-container {
+    text-align: center;
+    margin: 20px 0;
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out 0.1s forwards;
+}
+
+.ai-tag {
+    display: inline-block;
+    background-color: #eef0f2;
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Keep original Keyframe Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+</style>
+
+<!-- Original HTML content starts here, wrapped in IDs for scoping if needed -->
+<header id="tree-bikes-header">
+    <h1>tree bikes </h1>
+    <p>$1/day</p>
+</header>
+
+<div class="ai-tag-container">
+    <span class="ai-tag">bikes powered by ai</span>
+</div>
+
+<main id="tree-bikes-main">
+    <section id="hero">
+        <h2>your $1/day campus ride</h2>
+        <p style="white-space: pre-wrap; font-family: monospace; text-align: left;">
+i visit stanford a lot.
+but stanford too big.
+all my friends have bikes.
+and i'm tired of walking.
+so i'm deploying 25 bikes all around the farm.
+so that no one needs to steal golf carts.
+
+
+
+        </p>
+        <p>it's legit</p>
+    </section>
+
+    <section id="google-form-section">
+        <h2>join the waiting list</h2>
+        <p>enter your details below. we'll email you about availability.</p>
+        <div class="google-form-container">
+             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdyZBF09fCEGfa4aKVQK6OWicean6840k204klVGHSfQmjFfg/viewform?embedded=true" width="640" height="520" frameborder="0" marginheight="0" marginwidth="0">loading…</iframe>
+        </div>
+    </section>
+
+</main>
+
+<footer id="tree-bikes-footer">
+    <p>&copy; 2024 tree bikes Stanford. fuck cars initiative.</p>
+    <p class="disclaimer">
+        this is a non-profit initiative. all proceeds, after covering basic maintenance, will be donated to <a href="https://www.sequoiacap.com/" target="_blank" rel="noopener noreferrer">a local charity</a>.
+    </p>
+    <p class="disclaimer">Tree Bikes operates as an independent entity. It is not affiliated with, sponsored by, or endorsed by Leland Stanford Junior University. Any references to the university are for informational purposes only and do not imply endorsement.</p>
+</footer>
