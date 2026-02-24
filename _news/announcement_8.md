@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-new paper: [I Dropped a Neural Net](https://arxiv.org/abs/2602.19845) is on arXiv.
+I was the first to solve Jane Street's puzzle. check out my solution: [I Dropped a Neural Net](/blog/2026/i-dropped-a-neural-net/).
