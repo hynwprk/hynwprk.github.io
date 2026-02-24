@@ -20,11 +20,22 @@ ninja.data = [{
       
         title: "I Dropped a Neural Net",
       
-      description: "I was the first to solve Jane Street&#39;s puzzle—recovering the exact layer ordering of a shuffled 96-layer ResNet from a search space of 10^122.",
+      description: "I was the first to solve Jane Street&#39;s puzzle, recovering the exact layer ordering of a shuffled 96-layer ResNet from a search space of 10^122.",
       section: "Posts",
       handler: () => {
         
           window.location.href = "/blog/2026/i-dropped-a-neural-net/";
+        
+      },
+    },{id: "post-humanity-39-s-last-exam",
+      
+        title: "Humanity&#39;s Last Exam",
+      
+      description: "I was one of the top contributors for Humanity&#39;s Last Exam. 14 of my submissions were accepted.",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/humanitys-last-exam/";
         
       },
     },{id: "post-a-post-with-image-galleries",
