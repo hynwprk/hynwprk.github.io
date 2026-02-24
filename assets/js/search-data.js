@@ -388,13 +388,11 @@ ninja.data = [{
           section: "News",},{id: "news-submitted-my-leave-of-absence-form",
           title: 'submitted my leave of absence form',
           description: "",
-          section: "News",},{id: "news-humanity-39-s-last-exam-is-released",
-          title: 'Humanity&amp;#39;s Last Exam is released',
+          section: "News",},{id: "news-i-was-one-of-the-top-contributors-for-humanity-s-last-exam-14-of-my-submissions-were-accepted-12-public-and-2-private-spanning-computational-game-theory-algebra-and-general-relativity-i-was-awarded-500-from-scale-ai-for-being-a-top-550-contributor-thanks-to-richard-stanley-my-erdős-number-is-now-3",
+          title: 'I was one of the top contributors for Humanity’s Last Exam! 14 of...',
           description: "",
-          section: "News",handler: () => {
-              window.location.href = "/news/announcement_6/";
-            },},{id: "news-i-was-the-first-to-solve-jane-street-s-puzzle-check-out-my-solution-i-dropped-a-neural-net",
-          title: 'I was the first to solve Jane Street’s puzzle. check out my solution:...',
+          section: "News",},{id: "news-i-was-the-first-to-solve-jane-street-s-puzzle-check-out-my-solution-i-dropped-a-neural-net",
+          title: 'I was the first to solve Jane Street’s puzzle! check out my solution:...',
           description: "",
           section: "News",},{id: "projects-project-10",
           title: 'project 10',
