@@ -20,7 +20,7 @@ ninja.data = [{
       
         title: "I Dropped a Neural Net",
       
-      description: "Recovering the exact layer ordering of a shuffled 96-layer ResNet.",
+      description: "I was the first to solve Jane Street&#39;s puzzle—recovering the exact layer ordering of a shuffled 96-layer ResNet from a search space of 10^122.",
       section: "Posts",
       handler: () => {
         
@@ -393,8 +393,8 @@ ninja.data = [{
           description: "",
           section: "News",handler: () => {
               window.location.href = "/news/announcement_6/";
-            },},{id: "news-new-paper-i-dropped-a-neural-net-is-on-arxiv",
-          title: 'new paper: I Dropped a Neural Net is on arXiv.',
+            },},{id: "news-i-was-the-first-to-solve-jane-street-s-puzzle-check-out-my-solution-i-dropped-a-neural-net",
+          title: 'I was the first to solve Jane Street’s puzzle. check out my solution:...',
           description: "",
           section: "News",},{id: "projects-project-10",
           title: 'project 10',
