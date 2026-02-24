@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-submitted my leave of absence form
+submitted my leave of absence form!
