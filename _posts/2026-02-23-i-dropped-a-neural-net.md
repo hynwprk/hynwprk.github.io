@@ -76,7 +76,7 @@ $$\delta_k := \mathbb{E}_{x \sim \mathcal{D}}\!\left[\|r_k(x)\|_2\right]$$
 
 Residual perturbation magnitude tends to increase with depth in trained networks. Sorting by ascending $$\delta_k$$ gives MSE = 0.0368.
 
-Surprisingly, a completely **data-free** proxy, sorting by $$\|W_{\text{out}}^{(k)}\|_F$$—also works (MSE = 0.0759).
+Surprisingly, a completely **data-free** proxy, sorting by $$\|W_{\text{out}}^{(k)}\|_F$$, also works (MSE = 0.0759).
 
 {% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/sort_delta_norm.png" class="img-fluid rounded z-depth-1" caption="Delta-norm seed ordering. Bar height = ground-truth position." %}
 
