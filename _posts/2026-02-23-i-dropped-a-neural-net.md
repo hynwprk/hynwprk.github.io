@@ -62,6 +62,8 @@ Correct pairs: $$d \in [1.76, 3.28]$$. Incorrect pairs: $$d \in [0.00, 0.58]$$. 
 
 {% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/all48_diag_pairing.png" class="img-fluid rounded z-depth-1" caption="All 48 product matrices from the original model. Every block exhibits a negative diagonal. Traces range from -13.5 to -7.4." %}
 
+{% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/pairing_animation.gif" class="img-fluid rounded z-depth-1" caption="Pairing animation: the diagonal dominance ratio identifies correct pairs." %}
+
 ---
 
 ## Ordering
@@ -78,7 +80,7 @@ Residual perturbation magnitude tends to increase with depth in trained networks
 
 Surprisingly, a completely **data-free** proxy, sorting by $$\|W_{\text{out}}^{(k)}\|_F$$, also works (MSE = 0.0759).
 
-{% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/sort_delta_norm.png" class="img-fluid rounded z-depth-1" caption="Delta-norm seed ordering. Bar height = ground-truth position." %}
+{% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/sorting_animation.gif" class="img-fluid rounded z-depth-1" caption="Ordering pipeline: delta-norm seed, Bradley-Terry reranking, bubble repair to exact solution." %}
 
 ### Bradley-Terry ranking
 
@@ -89,8 +91,6 @@ $$p_{A \prec B} = \frac{1}{1 + \exp(-g_{AB}/T)}$$
 Sorting by BT strength yields MSE = 0.00299, a 12x improvement over the seed.
 
 Out of $$\binom{48}{3} = 17{,}296$$ directed triples, only **66** (0.38%) exhibit a transitivity violation. These are spatially local (spanning < 15 ground-truth positions) and weak (median margin $$1.8 \times 10^{-4}$$ vs. overall median 0.041).
-
-{% include figure.liquid loading="eager" path="assets/img/dropped-neural-net/sort_bt_complete.png" class="img-fluid rounded z-depth-1" caption="After BT reranking, much closer to the correct ordering." %}
 
 ### Bubble repair
 
