@@ -31,6 +31,10 @@ I have received a score of 25 on the 2023 Putnam Competition placing top 580th i
 
 I was a top contributor for Humanity's Last Exam which made my [erdos number](https://en.wikipedia.org/wiki/Erdős_number) 3.
 
+I was born in Seoul. 
+
+I have lived in SF, NYC, Atlanta, Boston, LA, Pittsburgh, London, Helsinki, Ankara, Singapore, Seoul, Tokyo, Beijing, Shanghai, Shenzhen, and Hong Kong.
+
 I spend a lot of time at different universities around the world. 
 
 I use [colemak](https://colemak.com).
