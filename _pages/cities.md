@@ -2,7 +2,7 @@
 layout: page
 title: cities
 permalink: /cities/
-description: photos from cities I've lived in
+description: memories
 nav: false
 images:
   lightbox2: true
