@@ -1,0 +1,79 @@
+- name: SF
+  slug: sf
+  photos:
+    - IMG_4776.jpeg
+
+- name: NYC
+  slug: nyc
+  photos:
+    - IMG_1193.jpeg
+
+- name: Atlanta
+  slug: atlanta
+  photos:
+    - IMG_7585.jpeg
+
+- name: Boston
+  slug: boston
+  photos:
+    - IMG_7825.jpeg
+
+- name: LA
+  slug: la
+  photos:
+    - IMG_2442.jpeg
+
+- name: Pittsburgh
+  slug: pittsburgh
+  photos:
+    - IMG_1772.jpeg
+
+- name: London
+  slug: london
+  photos:
+    - IMG_7013.jpeg
+
+- name: Helsinki
+  slug: helsinki
+  photos:
+    - IMG_2203.jpeg
+
+- name: Ankara
+  slug: ankara
+  photos:
+    - IMG_4666.JPG
+
+- name: Singapore
+  slug: singapore
+  photos:
+    - IMG_9199.jpeg
+
+- name: Seoul
+  slug: seoul
+  photos:
+    - IMG_3126.jpeg
+
+- name: Tokyo
+  slug: tokyo
+  photos:
+    - IMG_5997.jpeg
+
+- name: Beijing
+  slug: beijing
+  photos:
+    - IMG_3667.jpeg
+
+- name: Shanghai
+  slug: shanghai
+  photos:
+    - IMG_0710.jpeg
+
+- name: Shenzhen
+  slug: shenzhen
+  photos:
+    - IMG_2477.jpeg
+
+- name: Hong Kong
+  slug: hong-kong
+  photos:
+    - IMG_1398.jpeg

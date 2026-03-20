@@ -33,7 +33,7 @@ I was a top contributor for Humanity's Last Exam which made my [erdos number](ht
 
 I was born in Seoul. 
 
-I have lived in SF, NYC, Atlanta, Boston, LA, Pittsburgh, London, Helsinki, Ankara, Singapore, Seoul, Tokyo, Beijing, Shanghai, Shenzhen, and Hong Kong.
+I have lived in [SF](/cities/#sf), [NYC](/cities/#nyc), [Atlanta](/cities/#atlanta), [Boston](/cities/#boston), [LA](/cities/#la), [Pittsburgh](/cities/#pittsburgh), [London](/cities/#london), [Helsinki](/cities/#helsinki), [Ankara](/cities/#ankara), [Singapore](/cities/#singapore), [Seoul](/cities/#seoul), [Tokyo](/cities/#tokyo), [Beijing](/cities/#beijing), [Shanghai](/cities/#shanghai), [Shenzhen](/cities/#shenzhen), and [Hong Kong](/cities/#hong-kong).
 
 I spend a lot of time at different universities around the world. 
 
