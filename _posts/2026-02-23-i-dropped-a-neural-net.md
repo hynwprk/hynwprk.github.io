@@ -14,12 +14,23 @@ A recent [Dwarkesh Patel podcast](https://www.dwarkeshpatel.com) with John Colli
 I was the first to solve it!
 
 <div class="row justify-content-center mt-3">
-    <div class="col-12 col-md-10 col-lg-8">
-        <blockquote class="twitter-tweet" data-theme="light" data-dnt="true" data-media-max-width="640">
-            <a href="https://x.com/dwarkesh_sp/status/2035031412953223428">The Terence Tao episode — Dwarkesh Podcast (@dwarkesh_sp)</a>
-        </blockquote>
-        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <div class="col-12">
+        <video
+            class="img-fluid rounded z-depth-1"
+            style="width: 100%; height: auto;"
+            controls
+            preload="metadata"
+            playsinline
+            poster="{{ '/assets/video/dwarkesh-jane-street-shawn-poster.jpg' | relative_url }}"
+        >
+            <source src="{{ '/assets/video/dwarkesh-jane-street-shawn.mp4' | relative_url }}" type="video/mp4" />
+            Your browser does not support the video tag.
+            <a href="https://www.dwarkesh.com/p/terence-tao?timestamp=1650">Watch the clip on Dwarkesh.com</a>.
+        </video>
     </div>
+</div>
+<div class="caption">
+    Dwarkesh Patel breaks down my Jane Street ResNet puzzle solution on the <a href="https://www.dwarkesh.com/p/terence-tao?timestamp=1655" target="_blank" rel="noopener noreferrer">Terence Tao episode</a>.
 </div>
 
 ---
