@@ -14,22 +14,19 @@ A recent [Dwarkesh Patel podcast](https://www.dwarkeshpatel.com) with John Colli
 I was the first to solve it!
 
 <div class="row justify-content-center mt-3">
-    <div class="col-12 col-lg-10">
-        <iframe
-            src="https://www.dwarkesh.com/embed/podcast/terence-tao?timestamp=1650"
-            width="100%"
-            height="150"
-            frameborder="0"
-            scrolling="no"
-            class="rounded z-depth-1"
-            style="border: 1px solid rgba(0, 0, 0, 0.1);"
-            title="Dwarkesh Podcast with Terence Tao — Jane Street puzzle shoutout at 27:30"
-            loading="lazy"
-        ></iframe>
+    <div class="col-12">
+        <div class="rounded z-depth-1" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+            <iframe
+                src="https://www.youtube-nocookie.com/embed/Q8Fkpi18QXU?start=1650"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                title="Dwarkesh Podcast with Terence Tao — Jane Street puzzle shoutout at 27:30"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                loading="lazy"
+            ></iframe>
+        </div>
     </div>
-</div>
-<div class="caption">
-    The Jane Street sponsor read on the <a href="https://www.dwarkesh.com/p/terence-tao?timestamp=1650" target="_blank" rel="noopener noreferrer">Dwarkesh Podcast with Terence Tao</a> gives my ResNet puzzle walkthrough a shoutout at 27:30.
 </div>
 
 ---
