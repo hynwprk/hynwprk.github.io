@@ -13,6 +13,15 @@ A recent [Dwarkesh Patel podcast](https://www.dwarkeshpatel.com) with John Colli
 
 I was the first to solve it!
 
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include video.liquid path="https://www.youtube.com/embed/Q8Fkpi18QXU?start=1650" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+    The puzzle (and my solution) comes up at 27:30 in the Dwarkesh Patel podcast.
+</div>
+
 ---
 
 ## The puzzle
