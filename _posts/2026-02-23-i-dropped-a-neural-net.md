@@ -14,18 +14,11 @@ A recent [Dwarkesh Patel podcast](https://www.dwarkeshpatel.com) with John Colli
 I was the first to solve it!
 
 <div class="row justify-content-center mt-3">
-    <div class="col-12">
-        <div class="rounded z-depth-1" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-            <iframe
-                src="https://www.youtube-nocookie.com/embed/Q8Fkpi18QXU?start=1650"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-                title="Dwarkesh Podcast with Terence Tao — Jane Street puzzle shoutout at 27:30"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen
-                loading="lazy"
-            ></iframe>
-        </div>
+    <div class="col-12 col-md-10 col-lg-8">
+        <blockquote class="twitter-tweet" data-theme="light" data-dnt="true" data-media-max-width="640">
+            <a href="https://x.com/dwarkesh_sp/status/2035031412953223428">The Terence Tao episode — Dwarkesh Podcast (@dwarkesh_sp)</a>
+        </blockquote>
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     </div>
 </div>
 
