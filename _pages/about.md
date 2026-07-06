@@ -17,11 +17,11 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-I am currently on leave from CMU and have been spending time in Europe and Asia.(UPDATE: I am back in San Francisco. My phone number is a ten digit prime number. if not that's my old number.)
+I am currently on leave from CMU and have been spending time in Europe and Asia.(UPDATE: I am in London)
 
 I am broadly interested in machine learning, particularly in generative models built from first mathematical principles. 
 
-In my first two years of undergrad at Carnegie Mellon, I took 12 [graduate level courses](/assets/pdf/list.txt) in physics, mathematics, and computer science.
+In my two years of undergrad at Carnegie Mellon, I took 12 [graduate level courses](/assets/pdf/list.txt) in physics, mathematics, and computer science.
 
 I was a [research intern](https://www.lgresearch.ai/news/view?seq=438) at [LG AI Research](https://www.lgresearch.ai) where I worked on Generative Modelling for Manifolds.
 
@@ -34,8 +34,6 @@ I was a top contributor for Humanity's Last Exam which made my [erdos number](ht
 I was born in Seoul. 
 
 I have lived in [SF](/cities/#sf), [NYC](/cities/#nyc), [Atlanta](/cities/#atlanta), [Boston](/cities/#boston), [LA](/cities/#la), [Pittsburgh](/cities/#pittsburgh), [London](/cities/#london), [Helsinki](/cities/#helsinki), [Ankara](/cities/#ankara), [Singapore](/cities/#singapore), [Seoul](/cities/#seoul), [Tokyo](/cities/#tokyo), [Beijing](/cities/#beijing), [Shanghai](/cities/#shanghai), [Shenzhen](/cities/#shenzhen), and [Hong Kong](/cities/#hong-kong).
-
-I spend a lot of time at different universities around the world. 
 
 I use [colemak](https://colemak.com).
 
