@@ -17,7 +17,7 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-I am currently on leave from CMU and have been spending time in Europe and Asia.(UPDATE: I am in London)
+I am currently on leave from CMU and have been spending time travelling.(UPDATE: I am in NYC.)
 
 I am broadly interested in machine learning, particularly in generative models built from first mathematical principles. 
 
