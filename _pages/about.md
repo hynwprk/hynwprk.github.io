@@ -17,8 +17,6 @@ selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-
-
 I am broadly interested in machine learning, particularly in generative models built from first mathematical principles. 
 
 In my two years of undergrad at Carnegie Mellon, I took 12 [graduate level courses](/assets/pdf/list.txt) in physics, mathematics, and computer science.
